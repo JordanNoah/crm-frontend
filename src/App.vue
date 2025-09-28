@@ -1,30 +1,69 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
-  <router-view/>
+  <v-app>
+    <router-view />
+  </v-app>
 </template>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+/* Texto base con el color del tema */
+body {
+  color: rgb(var(--v-theme-on-background));
 }
 
-nav {
-  padding: 30px;
+/* Enlaces con el color primario del tema */
+a {
+  color: rgb(var(--v-theme-primary));
+  text-decoration: none;
 }
 
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
+a:hover {
+  text-decoration: underline;
 }
 
-nav a.router-link-exact-active {
-  color: #42b983;
+label,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: rgb(var(--v-theme-on-background)) !important;
+  /* opcional: reset de margen */
+}
+
+h4 {
+  line-height: 2.375rem;
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.v-application {
+  font-family: var(--v-font-family) !important;
+}
+
+a {
+  color: rgb(var(--v-theme-primary)) !important;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+.v-btn__content {
+  text-transform: none;
+}
+
+.v-list-item--nav .v-list-item-title {
+  font-size: .9375rem!important;
+  letter-spacing: .15px!important;
+  color: rgb(var(--v-theme-on-background)) !important;
+}
+
+i {
+  color: rgb(var(--v-theme-on-background)) !important;
 }
 </style>
