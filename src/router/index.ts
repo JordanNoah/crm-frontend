@@ -45,6 +45,41 @@ const routes: Array<RouteRecordRaw> = [
         path: 'phone-plugin',
         name: 'PhonePlugin',
         component: () => import('@/views/app/phone-plugin.vue')
+      },
+      {
+        path: 'headquart',
+        name: 'Headquart',
+        component: () => import('@/views/app/headquart.vue'),
+        children: [
+          {
+            path: ':uuid?',
+            name: 'HeadquarterEdit',
+            component: () => import('@/views/app/headquart.vue'),
+            props: true,
+          }
+        ]
+      },
+      {
+        path: 'users',
+        name: 'Users',
+        component: () => import('@/views/app/user.vue')
+      },
+      {
+        path: 'products',
+        name: 'Products',
+        component: () => import('@/views/app/product/index.vue'),
+        children: [
+          {
+            path: 'dashboard',
+            name: 'ProductDashboard',
+            component: () => import('@/views/app/product/dashboard.vue'),
+          },
+          {
+            path: 'form/:uuid',
+            name: 'ProductForm',
+            component: () => import('@/views/app/product/form.vue'),
+          }
+        ]
       }
     ]
   },
@@ -60,7 +95,7 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {  
+router.beforeEach((to, from, next) => {
   const isAuthenticated = useSessionStore().isAuthenticated;
   if ((to.name === 'Login' || to.name === 'Register') && isAuthenticated) {
     next({ name: 'App' });

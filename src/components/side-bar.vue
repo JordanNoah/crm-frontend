@@ -17,6 +17,9 @@
         </div>
         <v-list density="compact" nav>
             <v-list-item prepend-icon="mdi-home-outline" title="Dashboard" value="dashboard"></v-list-item>
+            <v-list-item prepend-icon="mdi-account-outline" title="Usuarios" value="users" :to="{ name: 'Users' }"></v-list-item>
+            <v-list-item prepend-icon="mdi-domain" title="Empresas" value="companies" :to="{ name: 'Headquart' }"></v-list-item>
+            <v-list-item prepend-icon="mdi-cart-outline" title="Productos" value="products" :to="{ name: 'ProductDashboard' }"></v-list-item>
             <v-list-item prepend-icon="mdi-puzzle-outline" title="Plugins" value="plugins" :to="{ name: 'Plugins' }"></v-list-item>
         </v-list>
         <v-divider />
@@ -63,9 +66,8 @@ export default defineComponent({
         },
         async getActivatedPlugins() {
             const activated = await AuthProvider.getActivatedPlugins(this.sessionStorage.company!.id!);
-            console.log(activated);
-            
             this.activatedPlugins = activated;
+            useSessionStore().setInstalledPlugins(activated);
         }
     },
 })

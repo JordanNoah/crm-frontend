@@ -22,7 +22,8 @@
           <template v-slot:activator="{ props }">
             <v-btn icon v-bind="props" size="40">
               <v-avatar size="40">
-                <v-img :src="profileImageUrl ?? undefined" />
+                <v-img :src="profileImageUrl ?? undefined" v-if="profileImageUrl" />
+                <span v-else>{{ getInitials() }}</span>
               </v-avatar>
             </v-btn>
           </template>
@@ -31,7 +32,8 @@
               <v-list-item title="Admin" subtitle="Administrator" @click="$router.push({ name: 'Profile' })">
                 <template v-slot:prepend>
                   <v-avatar size="40">
-                    <v-img :src="profileImageUrl ?? undefined" />
+                    <v-img :src="profileImageUrl ?? undefined" v-if="profileImageUrl" />
+                    <span v-else>{{ getInitials() }}</span>
                   </v-avatar>
                 </template>
               </v-list-item>
@@ -66,6 +68,14 @@ export default defineComponent({
     sessionStore: useSessionStore(),
   }),
   methods: {
+    getInitials() {
+      const account = this.sessionStore.getAccount
+      const first = (account?.firstName ?? '').trim().split(' ')[0] || ''
+      const last = (account?.lastName ?? '').trim().split(' ')[0] || ''
+
+      const initials = (first.charAt(0) + last.charAt(0)).toUpperCase()
+      return initials
+    },
     openSearcher() {
       useAppStore().openSearcherDialog()
     },

@@ -25,12 +25,16 @@
             <v-container v-if="selectedView === 3">
                 <p>Contenido de la Tercera Vista</p>
             </v-container>
+            <v-container v-if="selectedView === 4">
+                <PhoneConfiguration />
+            </v-container>
         </v-card>
     </v-container>
 </template>
 
 <script lang="ts">
 import PhonePosts from '@/components/phone/phone-posts.vue';
+import PhoneConfiguration from '@/components/phone/phone-configuration.vue';
 import { defineComponent } from 'vue'
 export default defineComponent({
     name: 'PhonePluginView',
@@ -38,7 +42,8 @@ export default defineComponent({
         selectedView: 1
     }),
     components: {
-        PhonePosts
+        PhonePosts,
+        PhoneConfiguration
     }
 })
 </script>

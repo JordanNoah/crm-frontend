@@ -4,7 +4,7 @@
     <Searcher />
     <v-main>
       <AppNavBar />
-      <v-container>
+      <v-container fluid v-if="company">
         <router-view />
       </v-container>
     </v-main>
@@ -34,6 +34,11 @@ export default defineComponent({
       useSessionStore().setCompany(response.company);
       useSessionStore().setAccount(response.account);
     }
+  },
+  computed: {
+    company() {
+      return useSessionStore().getCompany;
+    },
   },
 });
 </script>

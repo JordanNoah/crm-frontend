@@ -2,6 +2,7 @@ import AccountModel from "@/core/model/account.model";
 import CompanyModel from "@/core/model/company.model";
 import CountryModel from "@/core/model/country.model";
 import { LanguageModel } from "@/core/model/languages.model";
+import PluginModel from "@/core/model/plugin.model";
 import { defineStore } from "pinia";
 
 export const useSessionStore = defineStore("session", {
@@ -9,6 +10,7 @@ export const useSessionStore = defineStore("session", {
     accessToken: localStorage.getItem("accessToken") as string | null,
     account: null as AccountModel | null,
     company: null as CompanyModel | null,
+    installedPlugins: [] as PluginModel[],
   }),
   actions: {
     async checkAccessToken(): Promise<boolean> {
@@ -42,6 +44,9 @@ export const useSessionStore = defineStore("session", {
       if (this.account) {
         this.account.country = country;
       }
+    },
+    setInstalledPlugins(plugins: PluginModel[]) {
+      this.installedPlugins = plugins;
     },
     logout() {
       this.accessToken = null;

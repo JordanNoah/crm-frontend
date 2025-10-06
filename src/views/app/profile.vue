@@ -3,15 +3,17 @@
         <VCard>
             <v-container>
                 <div class="d-flex align-center mb-5">
-                    <v-card height="100" width="100" variant="tonal" elevation="0" class="mr-5">
-                        <v-img :src="preview ?? profileImageUrl ?? undefined" />
+                    <v-card height="100" width="100" variant="tonal" elevation="0" class="mr-5 d-flex align-center justify-center">
+                        <v-img :src="preview ?? profileImageUrl ?? undefined" v-if="preview || profileImageUrl" />
+                        <span v-else>{{ getInitials() }}</span>
                     </v-card>
                     <div>
                         <VBtn class="mb-4" @click="triggerFileInput">Subir una foto</VBtn>
                         <p>Permitido JPG, PNG y GIF.</p>
 
                         <!-- Input oculto -->
-                        <v-file-input v-show="false" label="File input" v-model="file" ref="fileInput" @change="handleFileUpload" accept="image/png, image/jpeg, image/gif"></v-file-input>
+                        <v-file-input v-show="false" label="File input" v-model="file" ref="fileInput"
+                            @change="handleFileUpload" accept="image/png, image/jpeg, image/gif"></v-file-input>
                     </div>
                 </div>
 
@@ -248,7 +250,7 @@ export default defineComponent({
         async save() {
             const profile = this.sessionStore.getAccount
             console.log(profile);
-            
+
             await AuthProvider.updateProfile(profile!)
         },
         async getCountries() {
@@ -268,6 +270,14 @@ export default defineComponent({
             if (file) {
                 this.preview = URL.createObjectURL(file);
             }
+        },
+        getInitials() {
+            const account = this.sessionStore.getAccount
+            const first = (account?.firstName ?? '').trim().split(' ')[0] || ''
+            const last = (account?.lastName ?? '').trim().split(' ')[0] || ''
+
+            const initials = (first.charAt(0) + last.charAt(0)).toUpperCase()
+            return initials
         },
     }
 })
