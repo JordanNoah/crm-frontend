@@ -43,4 +43,19 @@ export default class HeadquarterModel {
             deletedAt,
         );
     }
+
+    static newCleaner(): HeadquarterModel {
+        return new HeadquarterModel(
+            '',
+            '',
+            '',
+            '',
+            0,
+            [],
+            [],
+            '',
+            '',
+            false,
+        )
+    }
 }

@@ -151,9 +151,9 @@ export default class AuthProvider {
         );
     }
 
-    static async getHeadquarterByUuid(uuid: string): Promise<HeadquarterModel> {
+    static async getHeadquarterByUuid(uuid: string): Promise<HeadquarterModel | null> {
         const response = await this.authAxios.get(`/headquarters/${uuid}`);
-        return HeadquarterModel.fromExternal(response.data);
+        return response.data != null ? HeadquarterModel.fromExternal(response.data) : null;
     }
 
     static async enableHeadquarterMobile(uuid: string): Promise<void> {
@@ -252,4 +252,31 @@ export default class AuthProvider {
         const response = await this.authAxios.get(`/taxes`);
         return response.data.map((item: any) => TaxModel.fromExternal(item));
     }
+
+    static async getProductsByString(companyId: number, search: string, headquarterId: number): Promise<ProductModel[]> {
+        const response = await this.authAxios.post(`/products/company/search`, { 
+            companyId, search, headquarterId
+         });
+        return response.data.map((item: any) => ProductModel.fromExternal(item));
+    }
+
+    static async addProductToHeadquarter(idHeadquarter: number, idProduct: number, stock: number): Promise<void> {
+        await this.authAxios.post(`products/headquarter-product/add`, { idProduct, idHeadquarter, stock });
+    }
+
+    static async getProductsByHeadquarter(idHeadquarter: number): Promise<ProductModel[]> {
+        const response = await this.authAxios.post(`products/headquarter-product`,{
+            idHeadquarter
+        });
+        return response.data.map((item: any) => ProductModel.fromExternal(item.product));
+    }
+
+    static async removeProductFromHeadquarter(idHeadquarter: number, idProduct: number): Promise<void> {
+        await this.authAxios.post(`products/headquarter-product/remove`, { idProduct, idHeadquarter });
+    }
+
+    static async addProductToAllDomains(idProduct: number, companyId: number): Promise<void> {
+        await this.authAxios.post(`/products/headquarter-product/add-all-domain`, { idProduct, companyId });
+    }
+
 }

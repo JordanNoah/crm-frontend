@@ -181,7 +181,11 @@ export default defineComponent({
     },
     async mounted() {
         const product = await this.getProductUuid();
-        if (!product && !this.company) {
+        console.log(this.company);
+        console.log(product);
+        
+        
+        if (!product) {
             this.createProduct();
         }else if (product) {
             this.product = product;
@@ -194,6 +198,8 @@ export default defineComponent({
             this.taxes = await AuthProvider.getTaxRates();
         },
         createProduct() {
+            console.log(this.company);
+            
             if (!this.company) return;
             this.product = ProductModel.createEmpty(this.company.id!);
         },

@@ -12,7 +12,8 @@
                         @update:options="onUpdateOptions">
                         <template v-slot:[`item.actions`]="{ item }">
                             <v-icon icon="mdi-pencil" @click="editHeadquarter(item)" class="mr-2"></v-icon>
-                            <v-icon icon="mdi-domain" v-if="hasMobilePlugin" @click="toggleEnable(item)" :color="item.enableMobile ? 'green' : 'grey'"></v-icon>
+                            <v-icon icon="mdi-domain" class="mr-2" v-if="hasMobilePlugin" @click="toggleEnable(item)" :color="item.enableMobile ? 'green' : 'grey'"></v-icon>
+                            <v-icon icon="mdi-cart" @click="openProducts(item)"></v-icon>
                         </template>
                         <template #no-data>
                             No hay sucursales registradas.
@@ -358,6 +359,9 @@ export default defineComponent({
 
             item.enableMobile ? await AuthProvider.disableHeadquarterMobile(item.uuid) : await AuthProvider.enableHeadquarterMobile(item.uuid);
             item.enableMobile = !item.enableMobile;
+        },
+        openProducts(item: HeadquarterModel) {
+            this.$router.push({ name: 'HeadquarterProducts', params: { uuid: item.uuid } });
         }
     }
 })

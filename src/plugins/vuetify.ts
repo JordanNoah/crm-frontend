@@ -73,6 +73,10 @@ export default createVuetify({
             variant: 'outlined',
             density: 'compact',
         },
+        VAutocomplete: {
+            variant: 'outlined',
+            density: 'compact',
+        },
     },
     aliases: {
         SearchTextField: components.VTextField,
@@ -83,6 +87,7 @@ export default createVuetify({
         VCard: components.VCard,
         VSelect: components.VSelect,
         VTextarea: components.VTextarea,
+        VAutocomplete: components.VAutocomplete,
     },
     theme: {
         defaultTheme: 'light',

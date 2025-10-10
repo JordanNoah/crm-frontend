@@ -49,12 +49,17 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'headquart',
         name: 'Headquart',
-        component: () => import('@/views/app/headquart.vue'),
+        component: () => import('@/views/app/headquart/index.vue'),
         children: [
           {
-            path: ':uuid?',
+            path: 'dashboard',
+            name: 'HeadquarterDashboard',
+            component: () => import('@/views/app/headquart/dashboard.vue'),
+          },
+          {
+            path: 'form/:uuid?',
             name: 'HeadquarterEdit',
-            component: () => import('@/views/app/headquart.vue'),
+            component: () => import('@/views/app/headquart/form.vue'),
             props: true,
           }
         ]
@@ -78,7 +83,7 @@ const routes: Array<RouteRecordRaw> = [
             path: 'form/:uuid',
             name: 'ProductForm',
             component: () => import('@/views/app/product/form.vue'),
-          }
+          },
         ]
       }
     ]

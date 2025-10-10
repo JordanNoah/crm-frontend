@@ -29,8 +29,17 @@
             <v-divider></v-divider>
             <v-container>
                 <v-data-table-server :headers="headers" :items="items" :items-length="totalItems">
-                    <template  v-slot:[`item.actions`]="{ item }">
+                    <template v-slot:[`item.name`]="{ item }">
+                        <div class="d-flex align-center">
+                            <div width="80">
+                                <v-img :src="imageProductUrl(item)" width="80" height="40" cover></v-img>
+                            </div>
+                            <span class="ml-2">{{ item.name }}</span>
+                        </div>
+                    </template>
+                    <template v-slot:[`item.actions`]="{ item }">
                         <v-icon icon="mdi-pencil" @click="editProduct(item)" class="mr-2"></v-icon>
+                        <v-icon icon="mdi-domain" @click="addToAllDomain(item)"></v-icon>
                     </template>
                 </v-data-table-server>
             </v-container>
@@ -93,7 +102,7 @@ export default defineComponent({
             if (!this.company) return;
             this.loading = true;
             try {
-                const {page, itemsPerPage, sortBy, search} = this.tableOptions
+                const { page, itemsPerPage, sortBy, search } = this.tableOptions
                 const sort = sortBy?.[0]?.key ?? 'number';
                 const order = (sortBy?.[0]?.order ?? 'desc').toUpperCase(); // 'ASC'|'DESC'
 
@@ -112,13 +121,23 @@ export default defineComponent({
         },
         editProduct(item: ProductModel) {
             this.$router.push({ name: 'ProductForm', params: { uuid: item.uuid } });
+        },
+        imageProductUrl(product: ProductModel): string {
+            if (product.images && product.images.length > 0) {
+                return product.images[0].url;
+            }
+            return 'https://www.shutterstock.com/image-vector/missing-picture-page-website-design-600nw-1552421075.jpg';
+        },
+        async addToAllDomain(item: ProductModel) {
+            if (!this.company) return;
+            await AuthProvider.addProductToAllDomains(item.id!, this.company.id!);
         }
     },
 });
 </script>
 
 <style scoped>
-.v-data-table__thead{
+.v-data-table__thead {
     background-color: #f5f5f5;
 }
 </style>
