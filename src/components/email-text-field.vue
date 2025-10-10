@@ -1,12 +1,6 @@
 <template>
-  <VTextField
-    :model-value="modelValue"
-    label="Correo electrónico"
-    type="email"
-    name="email"
-    :rules="[rules.required, rules.email]"
-    @update:model-value="$emit('update:modelValue', $event)"
-  />
+  <VTextField :model-value="modelValue" label="Correo electrónico" type="email" name="email"
+    :rules="[rules.required, rules.email]" @update:model-value="$emit('update:modelValue', $event)" />
 </template>
 
 <script lang="ts">
@@ -25,10 +19,10 @@ export default defineComponent({
     rules: {
       required: (value: string) => !!value || "Requerido.",
       email: (value: string) => {
-        if (/^[a-z.-]+@[a-z.-]+\.[a-z]+$/i.test(value)) return true
-
+        if (/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)) return true
         return 'Debe ser un correo electrónico válido.'
       },
+
     },
   }),
 })
