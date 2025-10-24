@@ -156,8 +156,8 @@ export default class AuthProvider {
         return response.data != null ? HeadquarterModel.fromExternal(response.data) : null;
     }
 
-    static async enableHeadquarterMobile(uuid: string): Promise<void> {
-        await this.authAxios.post(`/headquarters/enable-mobile`, { uuid });
+    static async enableHeadquarterMobile(uuids: string[], companyId: number): Promise<void> {
+        await this.authAxios.post(`/headquarters/enable-mobile`, { uuids: uuids, companyId: companyId });
     }
 
     static async disableHeadquarterMobile(uuid: string): Promise<void> {
@@ -222,6 +222,7 @@ export default class AuthProvider {
             response.data.total
         );
     }
+
     static async updateProduct(product: ProductModel): Promise<ProductModel> {
         const fd = new FormData();
         const { images, files, ...rest } = product as any;
@@ -248,6 +249,7 @@ export default class AuthProvider {
         });
         return ProductModel.fromExternal(response.data);
     }
+
     static async getTaxRates(): Promise<TaxModel[]> {
         const response = await this.authAxios.get(`/taxes`);
         return response.data.map((item: any) => TaxModel.fromExternal(item));
@@ -279,4 +281,20 @@ export default class AuthProvider {
         await this.authAxios.post(`/products/headquarter-product/add-all-domain`, { idProduct, companyId });
     }
 
+    static async uploadProfilePhoneImage(image:File, companyId: number): Promise<string> {
+        const fd = new FormData();
+        fd.append('image', image);
+        fd.append('companyId', String(companyId));
+        const response = await this.authAxios.post(`/plugins/company/profile/phone-image`, fd, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            }
+        });
+        return response.data.url;
+    }
+
+    static async getProfilePhoneImageUrl(companyId: number): Promise<string | null> {
+        const response = await this.authAxios.get(`/plugins/company/profile/phone-image/${companyId}`);
+        return response.data.url;
+    }
 }

@@ -218,6 +218,7 @@ export default defineComponent({
                 this.editingItem = response;
             } else {
                 this.editingItem = HeadquarterModel.newCleaner();
+                this.editingItem.uuid = uuid;
             }
         },
         previewFile(file: File | ImageEntity): string {
@@ -232,7 +233,6 @@ export default defineComponent({
             (this.$refs.fileInput as HTMLInputElement).click();
         },
         async saveHeadquarter() {
-            // 1) Validar formulario Vuetify
             const result = await (this.$refs.form as any)?.validate?.();
             const valid = typeof result === 'object' ? !!result.valid : !!result;
 

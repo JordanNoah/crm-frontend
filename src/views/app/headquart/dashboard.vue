@@ -96,19 +96,6 @@ export default defineComponent({
                 params: { uuid: item.uuid },
             });
         },
-        async toggleEnable(item: HeadquarterModel) {
-            if (!item.enableMobile && item.images.length === 0) {
-                alert('Debe agregar al menos una imagen para habilitar el acceso móvil.');
-                return;
-            }
-            if (!item.enableMobile && !item.description) {
-                alert('Debe agregar una descripción para habilitar el acceso móvil.');
-                return;
-            }
-
-            item.enableMobile ? await AuthProvider.disableHeadquarterMobile(item.uuid) : await AuthProvider.enableHeadquarterMobile(item.uuid);
-            item.enableMobile = !item.enableMobile;
-        },
         openProducts(item: HeadquarterModel) {
             this.$router.push({ name: 'HeadquarterProducts', params: { uuid: item.uuid } });
         },

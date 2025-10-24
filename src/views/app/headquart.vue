@@ -357,7 +357,7 @@ export default defineComponent({
                 return;
             }
 
-            item.enableMobile ? await AuthProvider.disableHeadquarterMobile(item.uuid) : await AuthProvider.enableHeadquarterMobile(item.uuid);
+            item.enableMobile ? await AuthProvider.disableHeadquarterMobile(item.uuid) : await AuthProvider.enableHeadquarterMobile([item.uuid], this.company!.id!);
             item.enableMobile = !item.enableMobile;
         },
         openProducts(item: HeadquarterModel) {
