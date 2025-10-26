@@ -36,6 +36,10 @@
 import PhonePosts from '@/components/phone/phone-posts.vue';
 import PhoneConfiguration from '@/components/phone/phone-configuration.vue';
 import { defineComponent } from 'vue'
+import { useAppStore } from '@/stores/app';
+import SessionModel from '@/core/model/session.model';
+import { useSessionStore } from '@/stores/session';
+import AuthProvider from '@/core/providers/auth/auth';
 export default defineComponent({
     name: 'PhonePluginView',
     data: () => ({
@@ -44,6 +48,16 @@ export default defineComponent({
     components: {
         PhonePosts,
         PhoneConfiguration
+    },
+    computed: {
+        company: function() {
+            return useSessionStore().company;
+        }
+    },
+    async mounted() {
+        const response = await AuthProvider.getCompanyRepresent(this.company!.id!);
+        response.companyId = this.company!.id!;
+        useAppStore().setRepresent(response);
     }
 })
 </script>

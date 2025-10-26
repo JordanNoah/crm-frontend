@@ -15,6 +15,7 @@ import PaginationItemEntity from "@/core/entities/paginatedItem.entity";
 import ProductModel from "@/core/model/product.model";
 import ProductCategoryModel from "@/core/model/productCategory.model";
 import TaxModel from "@/core/model/tax.model";
+import RepresentModel from "@/core/model/represent.model";
 
 export default class AuthProvider {
     private static readonly authAxios: AxiosInstance = Provider.getInstance("auth", {
@@ -296,5 +297,28 @@ export default class AuthProvider {
     static async getProfilePhoneImageUrl(companyId: number): Promise<string | null> {
         const response = await this.authAxios.get(`/plugins/company/profile/phone-image/${companyId}`);
         return response.data.url;
+    }
+
+    static async upsertRepresent(represent: RepresentModel): Promise<RepresentModel> {
+        const formData = new FormData();
+        formData.append('id', String(represent.id));
+        formData.append('uuid', represent.uuid);
+        formData.append('name', represent.name);
+        formData.append('description', represent.description ?? '');
+        formData.append('companyId', String(represent.companyId));
+        formData.append('profileImageUrl', represent.profileImageUrl ?? '');
+        if (represent.file) {
+            formData.append('file', represent.file);
+        }
+
+        const response = await this.authAxios.post(`/represents`, formData,{
+            transformRequest: [(data) => data],
+        });
+        return RepresentModel.fromExternal(response.data);
+    }
+
+    static async getCompanyRepresent(companyId: number): Promise<RepresentModel> {
+        const response = await this.authAxios.get(`/represents/company/${companyId}`);
+        return response.data ? RepresentModel.fromExternal(response.data) : RepresentModel.empty();
     }
 }
