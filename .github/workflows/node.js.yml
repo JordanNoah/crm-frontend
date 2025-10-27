@@ -1,4 +1,4 @@
-name: Vue CLI CI/CD (self-hosted build)
+name: Vue CLI CI/CD
 
 on:
   push:
@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: [self-hosted, linux, x64]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -21,7 +21,8 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Create .env
+      - name: Create .env (si necesitas vars en build)
+        if: ${{ env.NEEDS_ENV_FILE == 'true' }}
         run: |
           cat > .env << 'EOF'
           ${{ secrets.PROD_ENV_FILE }}
@@ -30,14 +31,45 @@ jobs:
       - name: Install deps
         run: npm ci --prefer-offline --no-audit --progress=false
 
-      - name: Build (lower footprint)
+      - name: Build (Vue CLI)
         env:
           NODE_ENV: production
-          
         run: |
-          nice -n 10 ionice -c2 -n7 npx vue-cli-service build
+          npx vue-cli-service build
 
-      - name: Deploy with rsync
+      - name: Pack dist
+        run: |
+          cd dist
+          zip -r ../dist.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-zip
+          path: dist.zip
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, linux, x64]   # tu EC2
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-zip
+          path: .
+
+      - name: Install unzip & rsync (si no están)
+        run: |
+          if ! command -v unzip >/dev/null; then sudo apt-get update && sudo apt-get install -y unzip; fi
+          if ! command -v rsync >/dev/null; then sudo apt-get update && sudo apt-get install -y rsync; fi
+
+      - name: Unzip to temp
+        run: |
+          rm -rf /tmp/dist && mkdir -p /tmp/dist
+          unzip -o dist.zip -d /tmp/dist
+
+      - name: Deploy to /var/www/html (atomic-ish)
         run: |
           sudo mkdir -p /var/www/html
-          sudo rsync -a --delete dist/ /var/www/html/
+          sudo rsync -a --delete /tmp/dist/ /var/www/html/
