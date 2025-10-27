@@ -1,4 +1,5 @@
 import ImageEntity from "../entities/image.entity";
+import TagModel from "./tags.model";
 
 export default class HeadquarterModel {
     constructor(
@@ -15,7 +16,8 @@ export default class HeadquarterModel {
         public id?: number,
         public createdAt?: string,
         public updatedAt?: string,
-        public deletedAt?: string | null
+        public deletedAt?: string | null,
+        public tags?: TagModel[],
     ) { }
 
     static fromExternal(object: { [key: string]: any }): HeadquarterModel {

@@ -16,6 +16,7 @@ import ProductModel from "@/core/model/product.model";
 import ProductCategoryModel from "@/core/model/productCategory.model";
 import TaxModel from "@/core/model/tax.model";
 import RepresentModel from "@/core/model/represent.model";
+import TagModel from "@/core/model/tags.model";
 
 export default class AuthProvider {
     private static readonly authAxios: AxiosInstance = Provider.getInstance("auth", {
@@ -217,7 +218,7 @@ export default class AuthProvider {
 
     static async getProducts(companyId: number, paginationEntity: PaginationEntity): Promise<PaginationItemEntity<ProductModel>> {
         const response = await this.authAxios.get(`/products/company/${companyId}`, { params: paginationEntity });
-        
+
         return new PaginationItemEntity(
             response.data.items.map((item: any) => ProductModel.fromExternal(item)),
             response.data.total
@@ -257,9 +258,9 @@ export default class AuthProvider {
     }
 
     static async getProductsByString(companyId: number, search: string, headquarterId: number): Promise<ProductModel[]> {
-        const response = await this.authAxios.post(`/products/company/search`, { 
+        const response = await this.authAxios.post(`/products/company/search`, {
             companyId, search, headquarterId
-         });
+        });
         return response.data.map((item: any) => ProductModel.fromExternal(item));
     }
 
@@ -268,7 +269,7 @@ export default class AuthProvider {
     }
 
     static async getProductsByHeadquarter(idHeadquarter: number): Promise<ProductModel[]> {
-        const response = await this.authAxios.post(`products/headquarter-product`,{
+        const response = await this.authAxios.post(`products/headquarter-product`, {
             idHeadquarter
         });
         return response.data.map((item: any) => ProductModel.fromExternal(item.product));
@@ -282,7 +283,7 @@ export default class AuthProvider {
         await this.authAxios.post(`/products/headquarter-product/add-all-domain`, { idProduct, companyId });
     }
 
-    static async uploadProfilePhoneImage(image:File, companyId: number): Promise<string> {
+    static async uploadProfilePhoneImage(image: File, companyId: number): Promise<string> {
         const fd = new FormData();
         fd.append('image', image);
         fd.append('companyId', String(companyId));
@@ -311,7 +312,7 @@ export default class AuthProvider {
             formData.append('file', represent.file);
         }
 
-        const response = await this.authAxios.post(`/represents`, formData,{
+        const response = await this.authAxios.post(`/represents`, formData, {
             transformRequest: [(data) => data],
         });
         return RepresentModel.fromExternal(response.data);
@@ -321,4 +322,40 @@ export default class AuthProvider {
         const response = await this.authAxios.get(`/represents/company/${companyId}`);
         return response.data ? RepresentModel.fromExternal(response.data) : RepresentModel.empty();
     }
+
+    static async getAllTags(): Promise<TagModel[]> {
+        const response = await this.authAxios.get('/tags');
+        return response.data.map((item: any) => TagModel.fromExternal(item));
+    }
+
+    static async getTagsByHeadquarter(headquarterId: number): Promise<TagModel[]> {
+        const response = await this.authAxios.get(`/headquarter-tags/headquarter/${headquarterId}`);
+        const associations = response.data.tags || [];
+
+        if (associations.length === 0) return [];
+
+        const tagIds = associations.map((assoc: any) => assoc.tagId).join(',');
+        const tagsResponse = await this.authAxios.get(`/tags/by-ids?ids=${tagIds}`);
+
+        return tagsResponse.data.map((item: any) => TagModel.fromExternal(item));
+    }
+
+    static async assignTagsToHeadquarter(headquarterId: number, tagIds: number[]): Promise<void> {
+        await this.authAxios.post(`/headquarter-tags/headquarter/${headquarterId}/assign-tags`, {
+            tagIds: tagIds
+        });
+    }
+
+    static async removeAllTagsFromHeadquarter(headquarterId: number): Promise<void> {
+        await this.authAxios.delete(`/headquarter-tags/headquarter/${headquarterId}/all`);
+    }
+
+    static async syncTagsToHeadquarter(headquarterId: number, tagIds: number[]): Promise<void> {
+        await this.removeAllTagsFromHeadquarter(headquarterId);
+
+        if (tagIds.length > 0) {
+            await this.assignTagsToHeadquarter(headquarterId, tagIds);
+        }
+    }
+
 }
