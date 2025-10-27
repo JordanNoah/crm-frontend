@@ -1,9 +1,13 @@
-name: Node.js CI/CD
+name: Vue CLI CI/CD (self-hosted build)
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ["master"]
   workflow_dispatch:
+
+concurrency:
+  group: frontend-master
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -17,12 +21,23 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Crear .env
+      - name: Create .env
         run: |
           cat > .env << 'EOF'
           ${{ secrets.PROD_ENV_FILE }}
           EOF
 
-      - run: npm ci
-      - run: npm run build --if-present
-      - run: sudo cp -r /home/ubuntu/actions-runner/_work/crm-frontend/crm-frontend/dist/* /var/www/html/
+      - name: Install deps
+        run: npm ci --prefer-offline --no-audit --progress=false
+
+      - name: Build (lower footprint)
+        env:
+          NODE_ENV: production
+          
+        run: |
+          nice -n 10 ionice -c2 -n7 npx vue-cli-service build
+
+      - name: Deploy with rsync
+        run: |
+          sudo mkdir -p /var/www/html
+          sudo rsync -a --delete dist/ /var/www/html/
