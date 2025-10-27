@@ -1,6 +1,6 @@
 <template>
     <v-container fluid>
-        <div class="d-flex justify-space-between align-center mb-8">
+        <v-card variant="elevated" class="d-flex justify-space-between align-center mb-8">
             <div>
                 <h3>
                     Añadir / Editar Producto
@@ -20,7 +20,7 @@
                     Guardar Producto
                 </v-btn>
             </div>
-        </div>
+        </v-card>
         <v-form ref="form" v-if="product">
             <v-row>
                 <v-col cols="8">
