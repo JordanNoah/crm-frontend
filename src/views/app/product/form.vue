@@ -1,25 +1,27 @@
 <template>
     <v-container fluid>
         <v-card variant="elevated" class="d-flex justify-space-between align-center mb-8">
-            <div>
-                <h3>
-                    Añadir / Editar Producto
-                </h3>
-                <p>
-                    Setea los detalles del producto aquí.
-                </p>
-            </div>
-            <div>
-                <v-btn color="primary" class="ma-2" :to="{ name: 'ProductDashboard' }" variant="text">
-                    Volver al listado
-                </v-btn>
-                <v-btn color="error" class="ma-2" @click="deleteProduct" variant="text">
-                    Eliminar Producto
-                </v-btn>
-                <v-btn color="success" class="ma-2" @click="saveProduct" variant="tonal">
-                    Guardar Producto
-                </v-btn>
-            </div>
+            <v-container>
+                <div>
+                    <h3>
+                        Añadir / Editar Producto
+                    </h3>
+                    <p>
+                        Setea los detalles del producto aquí.
+                    </p>
+                </div>
+                <div>
+                    <v-btn color="primary" class="ma-2" :to="{ name: 'ProductDashboard' }" variant="text">
+                        Volver al listado
+                    </v-btn>
+                    <v-btn color="error" class="ma-2" @click="deleteProduct" variant="text">
+                        Eliminar Producto
+                    </v-btn>
+                    <v-btn color="success" class="ma-2" @click="saveProduct" variant="tonal">
+                        Guardar Producto
+                    </v-btn>
+                </div>
+            </v-container>
         </v-card>
         <v-form ref="form" v-if="product">
             <v-row>
@@ -27,9 +29,12 @@
                     <v-card variant="elevated" class="pa-4 mb-8 border-thin">
                         <h5 class="mb-4">Informacion del Producto</h5>
                         <div>
-                            <v-text-field label="Nombre" hide-details="auto" class="mb-4" :rules="[rules.required]" v-model="product.name"></v-text-field>
-                            <v-text-field label="Codigo" hide-details="auto" class="mb-4" :rules="[rules.required]" v-model="product.code"></v-text-field>
-                            <v-textarea label="Descripcion" hide-details="auto" v-model="product.description"></v-textarea>
+                            <v-text-field label="Nombre" hide-details="auto" class="mb-4" :rules="[rules.required]"
+                                v-model="product.name"></v-text-field>
+                            <v-text-field label="Codigo" hide-details="auto" class="mb-4" :rules="[rules.required]"
+                                v-model="product.code"></v-text-field>
+                            <v-textarea label="Descripcion" hide-details="auto"
+                                v-model="product.description"></v-textarea>
                         </div>
                     </v-card>
                     <v-card variant="elevated" class="pa-4 mb-8 border-thin">
@@ -88,21 +93,27 @@
                 <v-col cols="4">
                     <v-card variant="elevated" class="pa-4 border-thin">
                         <h5 class="mb-4">Precio</h5>
-                        <v-text-field label="Precio" hide-details="auto" class="mb-4" prefix="$" :rules="[rules.required]" v-model="product.price"></v-text-field>
-                        <v-text-field label="Precio de oferta" hide-details="auto" class="mb-4" prefix="$" :rules="[rules.required]" v-model="product.offertPrice"></v-text-field>
-                        <v-select label="Impuesto" hide-details="auto" class="mb-4" :rules="[rules.required]" v-model="product.taxId" :items="taxes" item-title="name" item-value="id"></v-select>
+                        <v-text-field label="Precio" hide-details="auto" class="mb-4" prefix="$"
+                            :rules="[rules.required]" v-model="product.price"></v-text-field>
+                        <v-text-field label="Precio de oferta" hide-details="auto" class="mb-4" prefix="$"
+                            :rules="[rules.required]" v-model="product.offertPrice"></v-text-field>
+                        <v-select label="Impuesto" hide-details="auto" class="mb-4" :rules="[rules.required]"
+                            v-model="product.taxId" :items="taxes" item-title="name" item-value="id"></v-select>
                     </v-card>
                     <v-card variant="elevated" class="pa-4 mt-8 border-thin">
                         <h5 class="mb-4">Categoría y Estado</h5>
                         <div class="d-flex align-top mb-4">
-                            <v-select label="Categoría" hide-details="auto" class="mr-2" :rules="[rules.required]" :items="categories" item-title="name" item-value="id" v-model="product.categoryId"></v-select>
-                            <v-btn variant="outlined" :min-width="38" :max-width="38" :min-height="38" :max-height="38" @click="categoryDialog = true"
-                                class="pa-0">
+                            <v-select label="Categoría" hide-details="auto" class="mr-2" :rules="[rules.required]"
+                                :items="categories" item-title="name" item-value="id"
+                                v-model="product.categoryId"></v-select>
+                            <v-btn variant="outlined" :min-width="38" :max-width="38" :min-height="38" :max-height="38"
+                                @click="categoryDialog = true" class="pa-0">
                                 <v-icon icon="mdi-plus" size="20" color="primary"></v-icon>
                             </v-btn>
                         </div>
-                        <v-select label="Estado" hide-details="auto" class="mb-4"
-                            :items="statusItems" :rules="[rules.required]" v-model="product.status" item-title="title" item-value="id"></v-select>
+                        <v-select label="Estado" hide-details="auto" class="mb-4" :items="statusItems"
+                            :rules="[rules.required]" v-model="product.status" item-title="title"
+                            item-value="id"></v-select>
                         <v-combobox v-model="product.tags" label="Tags" multiple chips closable-chips variant="outlined"
                             class="tags-input" hide-no-data hide-details="auto">
                         </v-combobox>
@@ -118,8 +129,10 @@
                 <v-card-title class="text-h5">Crear categoría</v-card-title>
                 <v-card-text>
                     <v-form ref="categoryForm">
-                        <v-text-field label="Nombre de la categoría" hide-details="auto" :rules="[rules.required]" class="mb-4" v-model="newCategory.name"></v-text-field>
-                        <v-textarea label="Descripción" hide-details="auto" v-model="newCategory.description"></v-textarea>
+                        <v-text-field label="Nombre de la categoría" hide-details="auto" :rules="[rules.required]"
+                            class="mb-4" v-model="newCategory.name"></v-text-field>
+                        <v-textarea label="Descripción" hide-details="auto"
+                            v-model="newCategory.description"></v-textarea>
                     </v-form>
                 </v-card-text>
                 <v-card-actions>
@@ -184,11 +197,11 @@ export default defineComponent({
         const product = await this.getProductUuid();
         console.log(this.company);
         console.log(product);
-        
-        
+
+
         if (!product) {
             this.createProduct();
-        }else if (product) {
+        } else if (product) {
             this.product = product;
         }
         await this.getCategories();
@@ -200,7 +213,7 @@ export default defineComponent({
         },
         createProduct() {
             console.log(this.company);
-            
+
             if (!this.company) return;
             this.product = ProductModel.createEmpty(this.company.id!);
         },
@@ -227,7 +240,7 @@ export default defineComponent({
         async getProductUuid() {
             const response = await AuthProvider.getProductByUuid(this.uuid);
             if (!response || !this.company) return;
-            
+
             return response
         },
         async getCategories() {
@@ -250,7 +263,7 @@ export default defineComponent({
 
             const response = await AuthProvider.saveCategory(category);
             this.categories.push(response);
-            
+
             this.categoryDialog = false;
         }
     },
