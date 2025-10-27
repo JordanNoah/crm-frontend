@@ -31,6 +31,7 @@ import ProductModel from '@/core/model/product.model';
 import AuthProvider from '@/core/providers/auth/auth';
 import { useSessionStore } from '@/stores/session';
 import { defineComponent } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
 
 export default defineComponent({
     data: () => ({
@@ -100,7 +101,7 @@ export default defineComponent({
             this.$router.push({ name: 'HeadquarterProducts', params: { uuid: item.uuid } });
         },
         createHeadquarter() {
-            this.$router.push({ name: 'HeadquarterEdit', params: { uuid: crypto.randomUUID() } });
+            this.$router.push({ name: 'HeadquarterEdit', params: { uuid: uuidv4() } });
         }
     }
 })

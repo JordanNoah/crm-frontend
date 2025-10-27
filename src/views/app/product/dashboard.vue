@@ -54,6 +54,8 @@ import ProductModel from '@/core/model/product.model';
 import AuthProvider from '@/core/providers/auth/auth';
 import { useSessionStore } from '@/stores/session';
 import { defineComponent } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
+
 export default defineComponent({
     name: 'ProductView',
     data: () => ({
@@ -92,7 +94,7 @@ export default defineComponent({
     },
     methods: {
         newUuid() {
-            return crypto.randomUUID();
+            return uuidv4();
         },
         async onUpdateOptions(opts: any) {
             this.tableOptions = { ...this.tableOptions, ...opts };

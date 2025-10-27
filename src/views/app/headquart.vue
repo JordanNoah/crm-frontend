@@ -107,6 +107,7 @@ import HeadquarterModel from '@/core/model/headquarter.model';
 import AuthProvider from '@/core/providers/auth/auth';
 import { useSessionStore } from '@/stores/session';
 import { defineComponent } from 'vue'
+import { v4 as uuidv4 } from 'uuid';
 
 export default defineComponent({
     name: 'Headquart',
@@ -123,7 +124,7 @@ export default defineComponent({
         itemsLength: 0,
         selectedFiles: [] as File[],
         editingItem: {
-            uuid: crypto.randomUUID().toString(),
+            uuid: uuidv4(),
             address: '',
             city: '',
             state: '',
@@ -161,7 +162,7 @@ export default defineComponent({
                 this.$router.push({ name: 'Headquart' });
                 if (this.company) {
                     this.editingItem = {
-                        uuid: crypto.randomUUID().toString(),
+                        uuid: uuidv4(),
                         address: '',
                         city: '',
                         state: '',

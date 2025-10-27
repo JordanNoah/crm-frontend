@@ -139,6 +139,7 @@ import TaxModel from '@/core/model/tax.model';
 import AuthProvider from '@/core/providers/auth/auth';
 import { useSessionStore } from '@/stores/session';
 import { defineComponent } from 'vue';
+import { v4 as uuidv4 } from 'uuid';
 
 export default defineComponent({
     name: 'ProductFormView',
@@ -241,7 +242,7 @@ export default defineComponent({
             if (!valid && !this.company) return;
 
             const category = new ProductCategoryModel(
-                crypto.randomUUID(),
+                uuidv4(),
                 this.newCategory.name,
                 this.newCategory.description,
                 this.company!.id!,
