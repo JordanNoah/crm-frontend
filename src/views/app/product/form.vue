@@ -1,7 +1,7 @@
 <template>
     <v-container fluid>
-        <v-card variant="elevated" class="d-flex justify-space-between align-center mb-8">
-            <v-container>
+        <v-card variant="elevated" class="mb-8">
+            <v-container class="d-flex justify-space-between align-center">
                 <div>
                     <h3>
                         Añadir / Editar Producto
