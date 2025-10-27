@@ -24,7 +24,7 @@
         <v-form ref="form" v-if="product">
             <v-row>
                 <v-col cols="8">
-                    <v-card class="pa-4 mb-8 border-thin">
+                    <v-card variant="elevated" class="pa-4 mb-8 border-thin">
                         <h5 class="mb-4">Informacion del Producto</h5>
                         <div>
                             <v-text-field label="Nombre" hide-details="auto" class="mb-4" :rules="[rules.required]" v-model="product.name"></v-text-field>
@@ -32,7 +32,7 @@
                             <v-textarea label="Descripcion" hide-details="auto" v-model="product.description"></v-textarea>
                         </div>
                     </v-card>
-                    <v-card class="pa-4 mb-8 border-thin">
+                    <v-card variant="elevated" class="pa-4 mb-8 border-thin">
                         <h5 class="mb-4">
                             Imagenes del Producto
                         </h5>
@@ -68,7 +68,7 @@
                             </v-col>
                         </v-row>
                     </v-card>
-                    <v-card class="pa-4 border-thin">
+                    <v-card variant="elevated" class="pa-4 border-thin">
                         <h5 class="mb-4">Variantes</h5>
                         <v-row>
                             <v-col cols="4">
@@ -86,13 +86,13 @@
                     </v-card>
                 </v-col>
                 <v-col cols="4">
-                    <v-card class="pa-4 border-thin">
+                    <v-card variant="elevated" class="pa-4 border-thin">
                         <h5 class="mb-4">Precio</h5>
                         <v-text-field label="Precio" hide-details="auto" class="mb-4" prefix="$" :rules="[rules.required]" v-model="product.price"></v-text-field>
                         <v-text-field label="Precio de oferta" hide-details="auto" class="mb-4" prefix="$" :rules="[rules.required]" v-model="product.offertPrice"></v-text-field>
                         <v-select label="Impuesto" hide-details="auto" class="mb-4" :rules="[rules.required]" v-model="product.taxId" :items="taxes" item-title="name" item-value="id"></v-select>
                     </v-card>
-                    <v-card class="pa-4 mt-8 border-thin">
+                    <v-card variant="elevated" class="pa-4 mt-8 border-thin">
                         <h5 class="mb-4">Categoría y Estado</h5>
                         <div class="d-flex align-top mb-4">
                             <v-select label="Categoría" hide-details="auto" class="mr-2" :rules="[rules.required]" :items="categories" item-title="name" item-value="id" v-model="product.categoryId"></v-select>
