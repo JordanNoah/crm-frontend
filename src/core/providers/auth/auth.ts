@@ -17,6 +17,10 @@ import ProductCategoryModel from "@/core/model/productCategory.model";
 import TaxModel from "@/core/model/tax.model";
 import RepresentModel from "@/core/model/represent.model";
 import TagModel from "@/core/model/tags.model";
+import { ConversationModel } from "@/core/model/chat/conversation.model";
+import { ConversationParticipantModel } from "@/core/model/chat/conversationParticipant.model";
+import { ConversationMessageModel } from "@/core/model/chat/conversationMessage.model";
+import { MessageStatusModel } from "@/core/model/chat/messageStatus.model";
 
 export default class AuthProvider {
     private static readonly authAxios: AxiosInstance = Provider.getInstance("auth", {
@@ -358,4 +362,387 @@ export default class AuthProvider {
         }
     }
 
+    // ==================== CONVERSACIONES ====================
+
+    static async getConversationsByAccount(
+        accountId: number,
+        options?: { limit?: number; offset?: number }
+    ): Promise<ConversationModel[]> {
+        const params: any = {};
+        if (options?.limit) params.limit = options.limit;
+        if (options?.offset) params.offset = options.offset;
+
+        const response = await this.authAxios.get(`/chats/conversations/account/${accountId}`, { params });
+        return response.data.map((item: any) => ConversationModel.fromExternal(item));
+    }
+
+    static async getConversationByUuid(uuid: string): Promise<ConversationModel> {
+        const response = await this.authAxios.get(`/chats/conversations/${uuid}`);
+        return ConversationModel.fromExternal(response.data);
+    }
+
+    static async createConversation(data: {
+        name: string | null;
+        type: 'private' | 'group';
+        createdBy: number;
+    }): Promise<ConversationModel> {
+        const response = await this.authAxios.post('/chats/conversations', data);
+        return ConversationModel.fromExternal(response.data);
+    }
+
+    static async updateConversation(
+        uuid: string,
+        data: { name?: string; type?: 'private' | 'group' }
+    ): Promise<ConversationModel> {
+        const response = await this.authAxios.put(`/chats/conversations/${uuid}`, data);
+        return ConversationModel.fromExternal(response.data);
+    }
+
+    static async deleteConversation(uuid: string): Promise<void> {
+        await this.authAxios.delete(`/chats/conversations/${uuid}`);
+    }
+
+    static async getPrivateConversation(
+        accountId1: number,
+        accountId2: number
+    ): Promise<ConversationModel | null> {
+        try {
+            const response = await this.authAxios.get('/chats/conversations/private', {
+                params: { accountId1, accountId2 }
+            });
+            return response.data ? ConversationModel.fromExternal(response.data) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    static async countConversationsByAccount(accountId: number): Promise<number> {
+        const response = await this.authAxios.get(`/chats/conversations/account/${accountId}/count`);
+        return response.data.count;
+    }
+
+    // ==================== PARTICIPANTES ====================
+
+    static async getParticipants(
+        conversationId: number,
+        includeLeft?: boolean
+    ): Promise<ConversationParticipantModel[]> {
+        const params: any = {};
+        if (includeLeft) params.includeLeft = true;
+
+        const response = await this.authAxios.get(`/chats/participants/conversation/${conversationId}`, { params });
+        return response.data.map((item: any) => ConversationParticipantModel.fromExternal(item));
+    }
+
+    static async addParticipant(
+        conversationId: number,
+        accountId: number,
+        role: 'admin' | 'member' = 'member'
+    ): Promise<ConversationParticipantModel> {
+        const response = await this.authAxios.post('/chats/participants', {
+            conversationId,
+            accountId,
+            role
+        });
+        return ConversationParticipantModel.fromExternal(response.data);
+    }
+
+    static async addMultipleParticipants(
+        conversationId: number,
+        participants: Array<{ accountId: number; role: 'admin' | 'member' }>
+    ): Promise<ConversationParticipantModel[]> {
+        const response = await this.authAxios.post('/chats/participants/bulk', {
+            conversationId,
+            participants
+        });
+        return response.data.map((item: any) => ConversationParticipantModel.fromExternal(item));
+    }
+
+    static async removeParticipant(uuid: string): Promise<void> {
+        await this.authAxios.delete(`/chats/participants/${uuid}`);
+    }
+
+    static async leaveConversation(uuid: string): Promise<ConversationParticipantModel> {
+        const response = await this.authAxios.post(`/chats/participants/${uuid}/leave`);
+        return ConversationParticipantModel.fromExternal(response.data);
+    }
+
+    static async updateParticipantRole(
+        uuid: string,
+        role: 'admin' | 'member'
+    ): Promise<ConversationParticipantModel> {
+        const response = await this.authAxios.put(`/chats/participants/${uuid}/role`, { role });
+        return ConversationParticipantModel.fromExternal(response.data);
+    }
+
+    static async isParticipant(conversationId: number, accountId: number): Promise<boolean> {
+        const response = await this.authAxios.get('/chats/participants/check', {
+            params: { conversationId, accountId }
+        });
+        return response.data.isParticipant;
+    }
+
+    static async countActiveParticipants(conversationId: number): Promise<number> {
+        const response = await this.authAxios.get(`/chats/participants/conversation/${conversationId}/count`);
+        return response.data.count;
+    }
+
+    // ==================== MENSAJES ====================
+
+    static async getMessagesByConversation(
+        conversationId: number,
+        options?: {
+            limit?: number;
+            offset?: number;
+            before?: Date;
+            after?: Date;
+        }
+    ): Promise<ConversationMessageModel[]> {
+        const params: any = {};
+        if (options?.limit) params.limit = options.limit;
+        if (options?.offset) params.offset = options.offset;
+        if (options?.before) params.before = options.before.toISOString();
+        if (options?.after) params.after = options.after.toISOString();
+
+        const response = await this.authAxios.get(`/chats/messages/conversation/${conversationId}`, { params });
+        return response.data.map((item: any) => ConversationMessageModel.fromExternal(item));
+    }
+
+    static async getMessageByUuid(uuid: string): Promise<ConversationMessageModel> {
+        const response = await this.authAxios.get(`/chats/messages/${uuid}`);
+        return ConversationMessageModel.fromExternal(response.data);
+    }
+
+    static async sendMessage(data: {
+        conversationId: number;
+        senderId: number;
+        content: string;
+        type: 'text' | 'image' | 'file' | 'audio' | 'video';
+        metadata?: string;
+        replyToId?: number | null;
+    }): Promise<ConversationMessageModel> {
+        const response = await this.authAxios.post('/chats/messages', data);
+        return ConversationMessageModel.fromExternal(response.data);
+    }
+
+    static async updateMessage(
+        uuid: string,
+        data: { content?: string; metadata?: string }
+    ): Promise<ConversationMessageModel> {
+        const response = await this.authAxios.put(`/chats/messages/${uuid}`, data);
+        return ConversationMessageModel.fromExternal(response.data);
+    }
+
+    static async deleteMessage(uuid: string): Promise<void> {
+        await this.authAxios.delete(`/chats/messages/${uuid}`);
+    }
+
+    static async getUnreadMessages(
+        conversationId: number,
+        accountId: number
+    ): Promise<ConversationMessageModel[]> {
+        const response = await this.authAxios.get(`/chats/messages/conversation/${conversationId}/unread`, {
+            params: { accountId }
+        });
+        return response.data.map((item: any) => ConversationMessageModel.fromExternal(item));
+    }
+
+    static async getLastMessage(conversationId: number): Promise<ConversationMessageModel | null> {
+        try {
+            const response = await this.authAxios.get(`/chats/messages/conversation/${conversationId}/last`);
+            return response.data ? ConversationMessageModel.fromExternal(response.data) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    static async searchMessages(
+        conversationId: number,
+        searchTerm: string,
+        options?: { limit?: number; offset?: number }
+    ): Promise<ConversationMessageModel[]> {
+        const params: any = { q: searchTerm };
+        if (options?.limit) params.limit = options.limit;
+        if (options?.offset) params.offset = options.offset;
+
+        const response = await this.authAxios.get(`/chats/messages/conversation/${conversationId}/search`, { params });
+        return response.data.map((item: any) => ConversationMessageModel.fromExternal(item));
+    }
+
+    static async getReplies(messageId: number): Promise<ConversationMessageModel[]> {
+        const response = await this.authAxios.get(`/chats/messages/${messageId}/replies`);
+        return response.data.map((item: any) => ConversationMessageModel.fromExternal(item));
+    }
+
+    static async countMessages(conversationId: number): Promise<number> {
+        const response = await this.authAxios.get(`/chats/messages/conversation/${conversationId}/count`);
+        return response.data.count;
+    }
+
+    static async countUnreadMessages(conversationId: number, accountId: number): Promise<number> {
+        const response = await this.authAxios.get(`/chats/messages/conversation/${conversationId}/unread/count`, {
+            params: { accountId }
+        });
+        return response.data.count;
+    }
+
+    // ==================== ESTADOS DE MENSAJES ====================
+
+    static async createMessageStatus(data: {
+        messageId: number;
+        accountId: number;
+        status: 'sent' | 'delivered' | 'read';
+    }): Promise<MessageStatusModel> {
+        const response = await this.authAxios.post('/chats/status', data);
+        return MessageStatusModel.fromExternal(response.data);
+    }
+
+    static async getStatusByMessage(messageId: number): Promise<MessageStatusModel[]> {
+        const response = await this.authAxios.get(`/chats/status/message/${messageId}`);
+        return response.data.map((item: any) => MessageStatusModel.fromExternal(item));
+    }
+
+    static async markAsDelivered(messageId: number, accountId: number): Promise<MessageStatusModel> {
+        const response = await this.authAxios.post('/chats/status/delivered', {
+            messageId,
+            accountId
+        });
+        return MessageStatusModel.fromExternal(response.data);
+    }
+
+    static async markAsRead(messageId: number, accountId: number): Promise<MessageStatusModel> {
+        const response = await this.authAxios.post('/chats/status/read', {
+            messageId,
+            accountId
+        });
+        return MessageStatusModel.fromExternal(response.data);
+    }
+
+    static async markManyAsRead(messageIds: number[], accountId: number): Promise<number> {
+        const response = await this.authAxios.post('/chats/status/read-many', {
+            messageIds,
+            accountId
+        });
+        return response.data.count;
+    }
+
+    static async markAllAsReadInConversation(conversationId: number, accountId: number): Promise<number> {
+        const response = await this.authAxios.post(`/chats/status/conversation/${conversationId}/read-all`, {
+            accountId
+        });
+        return response.data.count;
+    }
+
+    static async isReadByAll(messageId: number): Promise<boolean> {
+        const response = await this.authAxios.get(`/chats/status/message/${messageId}/read-by-all`);
+        return response.data.isReadByAll;
+    }
+
+    // ==================== FUNCIONES AUXILIARES ====================
+
+    static async uploadFile(file: File, conversationId: number): Promise<string> {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('conversationId', String(conversationId));
+
+        const response = await this.authAxios.post('/chats/messages/upload', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+
+        return response.data.url;
+    }
+
+    static async sendImageMessage(
+        conversationId: number,
+        senderId: number,
+        file: File,
+        caption?: string
+    ): Promise<ConversationMessageModel> {
+        const imageUrl = await this.uploadFile(file, conversationId);
+
+        const metadata = {
+            url: imageUrl,
+            fileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type,
+        };
+
+        return await this.sendMessage({
+            conversationId,
+            senderId,
+            content: caption || 'Imagen',
+            type: 'image',
+            metadata: JSON.stringify(metadata),
+        });
+    }
+
+    static async sendFileMessage(
+        conversationId: number,
+        senderId: number,
+        file: File
+    ): Promise<ConversationMessageModel> {
+        const fileUrl = await this.uploadFile(file, conversationId);
+
+        const metadata = {
+            url: fileUrl,
+            fileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type,
+        };
+
+        return await this.sendMessage({
+            conversationId,
+            senderId,
+            content: file.name,
+            type: 'file',
+            metadata: JSON.stringify(metadata),
+        });
+    }
+
+    // ==================== BÚSQUEDA Y FILTROS ====================
+
+    static async searchConversations(accountId: number, query: string): Promise<ConversationModel[]> {
+        const response = await this.authAxios.get(`/chats/conversations/account/${accountId}`, {
+            params: { search: query }
+        });
+        return response.data.map((item: any) => ConversationModel.fromExternal(item));
+    }
+
+    static async getConversationsWithUnread(accountId: number): Promise<ConversationModel[]> {
+        const response = await this.authAxios.get(`/chats/conversations/account/${accountId}`, {
+            params: { unreadOnly: true }
+        });
+        return response.data.map((item: any) => ConversationModel.fromExternal(item));
+    }
+
+    // ==================== NOTIFICACIONES Y TIEMPO REAL ====================
+
+    static async getUnreadCount(accountId: number): Promise<number> {
+        const response = await this.authAxios.get(`/chats/conversations/account/${accountId}/unread-count`);
+        return response.data.count;
+    }
+
+    static async muteConversation(conversationId: number, accountId: number, until?: Date): Promise<void> {
+        await this.authAxios.post(`/chats/conversations/${conversationId}/mute`, {
+            accountId,
+            until: until?.toISOString()
+        });
+    }
+
+    static async unmuteConversation(conversationId: number, accountId: number): Promise<void> {
+        await this.authAxios.post(`/chats/conversations/${conversationId}/unmute`, {
+            accountId
+        });
+    }
+
+    // ==================== BÚSQUEDA DE USUARIOS ====================
+
+    static async searchCompanyUsers(companyId: number, searchTerm: string): Promise<AccountModel[]> {
+        const response = await this.authAxios.get(`/accounts/company/${companyId}/search`, {
+            params: { q: searchTerm }
+        });
+        return response.data.map((item: any) => AccountModel.fromExternal(item));
+    }
 }

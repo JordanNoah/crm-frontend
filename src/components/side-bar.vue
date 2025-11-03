@@ -18,6 +18,7 @@
         <v-list density="compact" nav>
             <v-list-item prepend-icon="mdi-home-outline" title="Dashboard" value="dashboard"></v-list-item>
             <v-list-item prepend-icon="mdi-account-outline" title="Usuarios" value="users" :to="{ name: 'Users' }"></v-list-item>
+            <v-list-item prepend-icon="mdi-forum-outline" title="Chat" value="chat" :to="{ name: 'Chat' }"></v-list-item>
             <v-list-item prepend-icon="mdi-domain" title="Empresas" value="companies" :to="{ name: 'HeadquarterDashboard' }"></v-list-item>
             <v-list-item prepend-icon="mdi-cart-outline" title="Productos" value="products" :to="{ name: 'ProductDashboard' }"></v-list-item>
             <v-list-item prepend-icon="mdi-puzzle-outline" title="Plugins" value="plugins" :to="{ name: 'Plugins' }"></v-list-item>

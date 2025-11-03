@@ -4,7 +4,7 @@
     <Searcher />
     <v-main>
       <AppNavBar />
-      <v-container fluid v-if="company">
+      <v-container fluid v-if="company" class="pa-4 fill-height align-start">
         <router-view />
       </v-container>
     </v-main>
