@@ -1,6 +1,6 @@
 <template>
     <div 
-        class="conversation-item pa-3 d-flex align-center"
+        class="conversation-item py-2 px-3 d-flex align-center"
         :class="{ 'active': isActive }"
         @click="$emit('click')"
     >
@@ -10,13 +10,12 @@
             color="primary"
             overlap
         >
-            <v-avatar 
-                size="48" 
+            <UserAvatar 
+                :image-url="avatar"
+                :initials="initials"
                 :color="avatarColor"
-            >
-                <v-img :src="avatar" v-if="avatar" />
-                <span v-else>{{ initials }}</span>
-            </v-avatar>
+                size="40"
+            />
         </v-badge>
         
         <div class="flex-grow-1 ml-3 overflow-hidden">
@@ -36,9 +35,13 @@
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
 import { ConversationModel } from '@/core/model/chat/conversation.model';
+import UserAvatar from '@/components/UserAvatar.vue';
 
 export default defineComponent({
     name: 'ConversationItem',
+    components: {
+        UserAvatar,
+    },
     props: {
         conversation: {
             type: Object as PropType<ConversationModel>,

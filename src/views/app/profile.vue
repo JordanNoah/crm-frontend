@@ -3,10 +3,14 @@
         <VCard>
             <v-container>
                 <div class="d-flex align-center mb-5">
-                    <v-card height="100" width="100" variant="tonal" elevation="0" class="mr-5 d-flex align-center justify-center">
-                        <v-img :src="preview ?? profileImageUrl ?? undefined" v-if="preview || profileImageUrl" />
-                        <span v-else>{{ getInitials() }}</span>
-                    </v-card>
+                    <div class="mr-5">
+                        <UserAvatar
+                            :account="sessionStore.getAccount"
+                            :image-url="preview"
+                            size="100"
+                            color="primary"
+                        />
+                    </div>
                     <div>
                         <VBtn class="mb-4" @click="triggerFileInput">Subir una foto</VBtn>
                         <p>Permitido JPG, PNG y GIF.</p>
@@ -52,6 +56,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import EmailTextField from '@/components/email-text-field.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { useSessionStore } from '@/stores/session'
 import AuthProvider from '@/core/providers/auth/auth'
 import CountryModel from '@/core/model/country.model'
@@ -59,7 +64,10 @@ import { LanguageModel } from '@/core/model/languages.model'
 
 export default defineComponent({
     name: 'ProfileView',
-    components: { EmailTextField },
+    components: { 
+        EmailTextField,
+        UserAvatar,
+    },
     data() {
         return {
             sessionStore: useSessionStore(),
@@ -270,14 +278,6 @@ export default defineComponent({
             if (file) {
                 this.preview = URL.createObjectURL(file);
             }
-        },
-        getInitials() {
-            const account = this.sessionStore.getAccount
-            const first = (account?.firstName ?? '').trim().split(' ')[0] || ''
-            const last = (account?.lastName ?? '').trim().split(' ')[0] || ''
-
-            const initials = (first.charAt(0) + last.charAt(0)).toUpperCase()
-            return initials
         },
     }
 })

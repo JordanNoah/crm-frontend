@@ -373,6 +373,8 @@ export default class AuthProvider {
         if (options?.offset) params.offset = options.offset;
 
         const response = await this.authAxios.get(`/chats/conversations/account/${accountId}`, { params });
+        console.log(response);
+        
         return response.data.map((item: any) => ConversationModel.fromExternal(item));
     }
 
@@ -517,11 +519,42 @@ export default class AuthProvider {
         conversationId: number;
         senderId: number;
         content: string;
-        type: 'text' | 'image' | 'file' | 'audio' | 'video';
         metadata?: string;
         replyToId?: number | null;
+        file?: File;
     }): Promise<ConversationMessageModel> {
-        const response = await this.authAxios.post('/chats/messages', data);
+        const formData = new FormData();
+        formData.append('conversationId', String(data.conversationId));
+        formData.append('senderId', String(data.senderId));
+        formData.append('content', data.content);
+        
+        // Inferir el tipo del archivo si existe
+        if (data.file) {
+            const mimeType = data.file.type;
+            let type: 'text' | 'image' | 'file' | 'audio' | 'video' = 'file';
+            
+            if (mimeType.startsWith('image/')) {
+                type = 'image';
+            } else if (mimeType.startsWith('audio/')) {
+                type = 'audio';
+            } else if (mimeType.startsWith('video/')) {
+                type = 'video';
+            }
+            
+            formData.append('type', type);
+            formData.append('file', data.file);
+        } else {
+            formData.append('type', 'text');
+        }
+        
+        if (data.metadata) formData.append('metadata', data.metadata);
+        if (data.replyToId) formData.append('replyToId', String(data.replyToId));
+
+        const response = await this.authAxios.post('/chats/messages', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
         return ConversationMessageModel.fromExternal(response.data);
     }
 
@@ -636,69 +669,6 @@ export default class AuthProvider {
     static async isReadByAll(messageId: number): Promise<boolean> {
         const response = await this.authAxios.get(`/chats/status/message/${messageId}/read-by-all`);
         return response.data.isReadByAll;
-    }
-
-    // ==================== FUNCIONES AUXILIARES ====================
-
-    static async uploadFile(file: File, conversationId: number): Promise<string> {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('conversationId', String(conversationId));
-
-        const response = await this.authAxios.post('/chats/messages/upload', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            }
-        });
-
-        return response.data.url;
-    }
-
-    static async sendImageMessage(
-        conversationId: number,
-        senderId: number,
-        file: File,
-        caption?: string
-    ): Promise<ConversationMessageModel> {
-        const imageUrl = await this.uploadFile(file, conversationId);
-
-        const metadata = {
-            url: imageUrl,
-            fileName: file.name,
-            fileSize: file.size,
-            mimeType: file.type,
-        };
-
-        return await this.sendMessage({
-            conversationId,
-            senderId,
-            content: caption || 'Imagen',
-            type: 'image',
-            metadata: JSON.stringify(metadata),
-        });
-    }
-
-    static async sendFileMessage(
-        conversationId: number,
-        senderId: number,
-        file: File
-    ): Promise<ConversationMessageModel> {
-        const fileUrl = await this.uploadFile(file, conversationId);
-
-        const metadata = {
-            url: fileUrl,
-            fileName: file.name,
-            fileSize: file.size,
-            mimeType: file.type,
-        };
-
-        return await this.sendMessage({
-            conversationId,
-            senderId,
-            content: file.name,
-            type: 'file',
-            metadata: JSON.stringify(metadata),
-        });
     }
 
     // ==================== BÚSQUEDA Y FILTROS ====================

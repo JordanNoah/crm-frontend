@@ -21,20 +21,20 @@
         <v-menu min-width="200px">
           <template v-slot:activator="{ props }">
             <v-btn icon v-bind="props" size="40">
-              <v-avatar size="40">
-                <v-img :src="profileImageUrl ?? undefined" v-if="profileImageUrl" />
-                <span v-else>{{ getInitials() }}</span>
-              </v-avatar>
+              <UserAvatar
+                :account="sessionStore.getAccount"
+                size="40"
+              />
             </v-btn>
           </template>
           <v-card width="200">
             <v-list>
               <v-list-item title="Admin" subtitle="Administrator" @click="$router.push({ name: 'Profile' })">
                 <template v-slot:prepend>
-                  <v-avatar size="40">
-                    <v-img :src="profileImageUrl ?? undefined" v-if="profileImageUrl" />
-                    <span v-else>{{ getInitials() }}</span>
-                  </v-avatar>
+                  <UserAvatar
+                    :account="sessionStore.getAccount"
+                    size="40"
+                  />
                 </template>
               </v-list-item>
             </v-list>
@@ -60,22 +60,18 @@
 <script lang="ts">
 import { useAppStore } from '@/stores/app';
 import { useSessionStore } from '@/stores/session';
+import UserAvatar from '@/components/UserAvatar.vue';
 import { defineComponent, ref } from 'vue'
 
 export default defineComponent({
   name: 'TopBar',
+  components: {
+    UserAvatar,
+  },
   data: () => ({
     sessionStore: useSessionStore(),
   }),
   methods: {
-    getInitials() {
-      const account = this.sessionStore.getAccount
-      const first = (account?.firstName ?? '').trim().split(' ')[0] || ''
-      const last = (account?.lastName ?? '').trim().split(' ')[0] || ''
-
-      const initials = (first.charAt(0) + last.charAt(0)).toUpperCase()
-      return initials
-    },
     openSearcher() {
       useAppStore().openSearcherDialog()
     },

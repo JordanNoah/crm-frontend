@@ -32,6 +32,8 @@ export class ConversationParticipantModel {
             conversation,
             account
         } = object;
+        console.log(object);
+        
 
         if (id === undefined) throw new Error("id is required");
         if (uuid === undefined) throw new Error("uuid is required");

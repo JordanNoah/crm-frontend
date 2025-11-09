@@ -60,9 +60,8 @@ export const useChatStore = defineStore('chat', {
             
             try {
                 const conversations = await ChatProvider.getConversationsByAccount(accountId, options);
-                this.conversations = conversations.sort((a, b) => {
-                    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-                });
+                this.conversations = conversations;
+
             } catch (error: any) {
                 this.error = error.message || 'Error al cargar conversaciones';
                 console.error('Error loading conversations:', error);
@@ -216,6 +215,8 @@ export const useChatStore = defineStore('chat', {
             
             try {
                 const messages = await ChatProvider.getMessagesByConversation(conversationId, options);
+                console.log(messages);
+                
                 this.messages = messages.sort((a, b) => {
                     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
                 });
@@ -235,6 +236,7 @@ export const useChatStore = defineStore('chat', {
             type: 'text' | 'image' | 'file' | 'audio' | 'video';
             metadata?: string;
             replyToId?: number | null;
+            file?: File;
         }) {
             this.error = null;
             
