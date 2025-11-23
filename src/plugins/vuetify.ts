@@ -103,6 +103,18 @@ export default createVuetify({
                     'head-text': '#a8aab4',
                 },
             },
+            dark: {
+                variables: {
+                    'font-family': '"Inter", -apple-system, blinkmacsystemfont, "Segoe UI", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;',
+                },
+                colors: {
+                    background: '#1E1E2E',
+                    'on-background': '#FFFFFF',
+                    primary: '#666cff',
+                    'head-text': '#9ca3af',
+                    surface: '#2A2D3A',
+                },
+            },
         },
     },
     components: {

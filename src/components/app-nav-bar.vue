@@ -13,8 +13,20 @@
       <div class="d-flex align-center">
         <v-btn density="compact" icon="mdi-translate" class="mr-2"></v-btn>
         <div>
-          <v-btn density="compact" icon="mdi-weather-night" class="mr-2"></v-btn>
-          <v-btn density="compact" icon="mdi-weather-sunny" class="mr-2"></v-btn>
+          <v-btn 
+            v-if="!appStore.isDarkTheme"
+            density="compact" 
+            icon="mdi-weather-night" 
+            class="mr-2"
+            @click="toggleTheme"
+          ></v-btn>
+          <v-btn 
+            v-if="appStore.isDarkTheme"
+            density="compact" 
+            icon="mdi-weather-sunny" 
+            class="mr-2"
+            @click="toggleTheme"
+          ></v-btn>
         </div>
         <v-btn density="compact" icon="mdi-star-outline" class="mr-2"></v-btn>
         <v-btn density="compact" icon="mdi-bell-outline" class="mr-2"></v-btn>
@@ -70,6 +82,7 @@ export default defineComponent({
   },
   data: () => ({
     sessionStore: useSessionStore(),
+    appStore: useAppStore(),
   }),
   methods: {
     openSearcher() {
@@ -78,6 +91,9 @@ export default defineComponent({
     logout() {
       useSessionStore().logout()
       this.$router.push({ name: 'Login' })
+    },
+    toggleTheme() {
+      this.appStore.toggleTheme();
     },
   },
   computed: {

@@ -33,6 +33,7 @@
                                 :name="getConversationName(conversation)" :avatar="getConversationAvatar(conversation)"
                                 :avatar-color="getConversationColor(conversation)"
                                 :initials="getConversationInitials(conversation)"
+                                :conversation-type="getConversationType(conversation)"
                                 @click="selectConversation(conversation)" class="mb-2" />
                         </div>
                     </div>
@@ -159,11 +160,12 @@ import Conversation from '@/components/chat/conversation.vue';
 import { ConversationModel } from "@/core/model/chat/conversation.model";
 import { useChatStore } from "@/stores/chat";
 import { useSessionStore } from "@/stores/session";
+import { usePresenceStore } from "@/stores/presence";
 import { defineComponent } from "vue";
 import Message from '@/components/chat/message.vue';
 import UserAvatar from '@/components/UserAvatar.vue';
 import { ConversationMessageModel } from "@/core/model/chat/conversationMessage.model";
-import EmojiPicker from 'vue3-emoji-picker'
+import EmojiPicker from 'vue3-emoji-picker';
 
 export default defineComponent({
     name: "ChatView",
@@ -350,29 +352,43 @@ export default defineComponent({
             this.searchResults = [];
             this.selectedUser = null;
         },
+        getConversationType(conversation: ConversationModel): 'default' | 'phone' | 'video' {
+            // El backend envía directamente el tipo en el campo 'type'
+            // Tipos disponibles: 'private', 'group', 'mobile'
+            
+            if (conversation.type === 'mobile') {
+                return 'phone';
+            }
+            
+            // Por defecto: conversación normal (private o group)
+            return 'default';
+        },
         getConversationName(conversation: ConversationModel): string {
+            // Si tiene nombre personalizado, usarlo
             if (conversation.name) return conversation.name;
 
-            // Para conversaciones privadas
-            if (conversation.isPrivate && conversation.participants) {
-                // Buscar al otro participante (que no sea el usuario actual)
+            // Para conversaciones privadas o mobile, buscar al otro participante
+            if ((conversation.isPrivate || conversation.isMobile) && conversation.participants) {
                 const otherParticipant = conversation.participants.find(
                     p => p.accountId !== this.currentAccountId
                 );
 
-                // Si encontramos otro participante, mostrar su nombre
+                // Si encontramos otro participante, mostrar su nombre completo
                 if (otherParticipant?.account) {
-                    return `${otherParticipant.account.firstName} ${otherParticipant.account.lastName}`;
+                    const firstName = otherParticipant.account.firstName?.trim() || '';
+                    const lastName = otherParticipant.account.lastName?.trim() || '';
+                    const fullName = `${firstName} ${lastName}`.trim();
+                    
+                    // Si tiene nombre, retornarlo; si no, retornar "Sin nombre"
+                    return fullName || 'Sin nombre';
                 }
-
-                // Si no hay otro participante, es un chat consigo mismo
-                return 'Conversación privada';
             }
 
-            return 'Conversación privada';
+            // Solo si no hay nada más, mostrar este texto
+            return 'Sin nombre';
         },
         getConversationAvatar(conversation: ConversationModel): string | undefined {
-            if (conversation.isPrivate && conversation.participants) {
+            if ((conversation.isPrivate || conversation.isMobile) && conversation.participants) {
                 const otherParticipant = conversation.participants.find(
                     p => p.accountId !== this.currentAccountId
                 );
@@ -403,8 +419,8 @@ export default defineComponent({
                 return (parts[0]?.charAt(0) + (parts[1]?.charAt(0) || '')).toUpperCase();
             }
 
-            // Para conversaciones privadas
-            if (conversation.isPrivate && conversation.participants) {
+            // Para conversaciones privadas o mobile
+            if ((conversation.isPrivate || conversation.isMobile) && conversation.participants) {
                 const otherParticipant = conversation.participants.find(
                     p => p.accountId !== this.currentAccountId
                 );
@@ -480,6 +496,12 @@ export default defineComponent({
     },
     async mounted() {
         await this.loadConversations();
+        
+        // Inicializar listeners de presencia usando el store
+        const presenceStore = usePresenceStore();
+        presenceStore.initPresenceListeners();
+        
+        console.log('[Chat View] ✓ Listeners de presencia inicializados');
     },
 });
 </script>

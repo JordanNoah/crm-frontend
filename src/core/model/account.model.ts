@@ -1,5 +1,6 @@
 import CountryModel from "./country.model";
 import { LanguageModel } from "./languages.model";
+import RoleModel from "./role.model";
 
 export default class AccountModel {
     constructor(
@@ -21,10 +22,11 @@ export default class AccountModel {
         public createdAt?: Date,
         public updatedAt?: Date,
         public deletedAt?: Date | null,
-        public file?: File
+        public file?: File,
+        public roles: RoleModel[] = []
     ){}
     static fromExternal(object:{[key:string]: any}): AccountModel {
-        const { id, uuid, firstName, lastName, email, password, phoneNumber, address, state, zipCode, country, timezone, companyId, languages, createdAt, updatedAt, deletedAt, profileImageUrl } = object;
+        const { id, uuid, firstName, lastName, email, password, phoneNumber, address, state, zipCode, country, timezone, companyId, languages, createdAt, updatedAt, deletedAt, profileImageUrl, roles } = object;
 
         if (id === undefined) throw new Error("id is required");
         if (uuid === undefined) throw new Error("uuid is required");
@@ -54,7 +56,8 @@ export default class AccountModel {
             createdAt,
             updatedAt,
             deletedAt,
-            undefined
+            undefined,
+            roles ? roles.map((role: any) => RoleModel.fromExternal(role)) : []
         );
     }
 }

@@ -1,6 +1,29 @@
 <template>
+    <!-- Badge con ícono personalizado -->
     <v-badge
-        v-if="showStatus"
+        v-if="showStatus && statusIcon"
+        :color="statusColor"
+        location="bottom end"
+        overlap
+        bordered
+        :offset-x="badgeOffset"
+        :offset-y="badgeOffset"
+    >
+        <template v-slot:badge>
+            <v-icon size="x-small" :color="statusIconColor">{{ statusIcon }}</v-icon>
+        </template>
+        <v-avatar 
+            :size="size" 
+            :color="avatarColor"
+        >
+            <v-img v-if="computedImageUrl" :src="computedImageUrl" />
+            <span v-else>{{ computedInitials }}</span>
+        </v-avatar>
+    </v-badge>
+
+    <!-- Badge con punto simple -->
+    <v-badge
+        v-else-if="showStatus"
         dot
         :color="statusColor"
         location="bottom end"
@@ -18,6 +41,7 @@
         </v-avatar>
     </v-badge>
     
+    <!-- Sin badge -->
     <v-avatar 
         v-else
         :size="size" 
@@ -66,6 +90,15 @@ export default defineComponent({
         statusColor: {
             type: String,
             default: 'success',
+        },
+        // Configuración de ícono personalizado para el badge
+        statusIcon: {
+            type: String as PropType<string | null>,
+            default: null,
+        },
+        statusIconColor: {
+            type: String,
+            default: 'white',
         },
     },
     computed: {

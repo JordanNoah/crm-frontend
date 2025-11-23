@@ -14,7 +14,11 @@
                 :image-url="avatar"
                 :initials="initials"
                 :color="avatarColor"
-                size="40"
+                :size="40"
+                :show-status="showPresenceIndicator"
+                :status-color="presenceColor"
+                :status-icon="presenceIcon"
+                status-icon-color="white"
             />
         </v-badge>
         
@@ -36,6 +40,8 @@
 import { defineComponent, PropType } from 'vue';
 import { ConversationModel } from '@/core/model/chat/conversation.model';
 import UserAvatar from '@/components/UserAvatar.vue';
+import { usePresenceStore } from '@/stores/presence';
+import { useSessionStore } from '@/stores/session';
 
 export default defineComponent({
     name: 'ConversationItem',
@@ -67,6 +73,20 @@ export default defineComponent({
             type: String,
             default: 'NN',
         },
+        // Tipo de conversación para determinar el ícono
+        conversationType: {
+            type: String as PropType<'default' | 'phone' | 'video'>,
+            default: 'default',
+        },
+    },
+    setup() {
+        const presenceStore = usePresenceStore();
+        const sessionStore = useSessionStore();
+        
+        return {
+            presenceStore,
+            sessionStore,
+        };
     },
     computed: {
         lastMessagePreview(): string {
@@ -89,6 +109,61 @@ export default defineComponent({
             const lastMsg = this.conversation.lastMessage;
             if (!lastMsg) return '';
             return lastMsg.formattedTime;
+        },
+        // Obtener el ID del otro participante en conversaciones privadas
+        otherParticipantId(): number | null {
+            if (!this.conversation.isPrivate || !this.conversation.participants) {
+                return null;
+            }
+
+            const currentUserId = this.sessionStore.getAccount?.id;
+            const otherParticipant = this.conversation.participants.find(
+                p => p.accountId !== currentUserId
+            );
+
+            return otherParticipant?.accountId || null;
+        },
+        // Verificar si el otro usuario está online
+        isOtherUserOnline(): boolean {
+            if (!this.otherParticipantId) return false;
+            return this.presenceStore.isUserOnline(this.otherParticipantId);
+        },
+        // Mostrar indicador de presencia/tipo
+        showPresenceIndicator(): boolean {
+            // Para mobile (phone): SIEMPRE mostrar el ícono de teléfono
+            if (this.conversation.isMobile) {
+                return true;
+            }
+            
+            // Para conversaciones empresa-empresa (private/group): mostrar solo si hay otro participante Y está online
+            const isOneToOne = this.conversation.isPrivate && this.otherParticipantId !== null;
+            return isOneToOne && this.isOtherUserOnline;
+        },
+        
+        // Color del indicador
+        presenceColor(): string {
+            // Para mobile: siempre verde
+            if (this.conversation.isMobile) {
+                return 'success';
+            }
+            // Para empresa-empresa: verde si online, gris si offline
+            return this.isOtherUserOnline ? 'success' : 'grey';
+        },
+        
+        // Ícono según el tipo de conversación
+        presenceIcon(): string | null {
+            // Para mobile (phone): SIEMPRE mostrar ícono de teléfono verde
+            if (this.conversationType === 'phone') {
+                return 'mdi-cellphone';
+            }
+            
+            // Para video: mostrar ícono de video
+            if (this.conversationType === 'video') {
+                return 'mdi-video';
+            }
+            
+            // Para conversaciones normales (empresa-empresa): no mostrar ícono, solo el punto circular
+            return null;
         },
     },
 });

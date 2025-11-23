@@ -3,6 +3,7 @@ import ChatProvider from '@/core/providers/auth/auth';
 import { ConversationModel } from '@/core/model/chat/conversation.model';
 import { ConversationMessageModel } from '@/core/model/chat/conversationMessage.model';
 import { ConversationParticipantModel } from '@/core/model/chat/conversationParticipant.model';
+import { WebSocketProvider } from '@/core/providers/websocket';
 
 interface ChatState {
     conversations: ConversationModel[];
@@ -11,6 +12,7 @@ interface ChatState {
     participants: ConversationParticipantModel[];
     loading: boolean;
     error: string | null;
+    realtimeEnabled: boolean;
 }
 
 export const useChatStore = defineStore('chat', {
@@ -21,6 +23,7 @@ export const useChatStore = defineStore('chat', {
         participants: [],
         loading: false,
         error: null,
+        realtimeEnabled: false,
     }),
 
     getters: {
@@ -53,7 +56,203 @@ export const useChatStore = defineStore('chat', {
     },
 
     actions: {
-        // Conversaciones
+        // ==================== TIEMPO REAL ====================
+        
+        /**
+         * Inicializar listeners de WebSocket
+         */
+        initRealtimeListeners() {
+            if (this.realtimeEnabled) {
+                console.warn('[ChatStore] Los listeners de tiempo real ya están activos');
+                return;
+            }
+
+            console.log('[ChatStore] Inicializando listeners de tiempo real');
+
+            // Escuchar nuevos mensajes
+            WebSocketProvider.onNewMessage((data) => {
+                console.log('[ChatStore] Nuevo mensaje recibido:', data);
+                this.handleNewMessage(data.message);
+            });
+
+            // Escuchar cambios de estado de mensaje
+            WebSocketProvider.onMessageStatusChanged((data) => {
+                console.log('[ChatStore] Estado de mensaje cambiado:', data);
+                this.updateMessageStatusRealtime(data.messageId, data.accountId, data.status);
+            });
+
+            // Escuchar mensaje actualizado
+            WebSocketProvider.onMessageUpdated((data) => {
+                console.log('[ChatStore] Mensaje actualizado:', data);
+                this.handleMessageUpdated(data.message);
+            });
+
+            // Escuchar mensaje eliminado
+            WebSocketProvider.onMessageDeleted((data) => {
+                console.log('[ChatStore] Mensaje eliminado:', data);
+                this.handleMessageDeleted(data.messageId);
+            });
+
+            // Escuchar nueva conversación
+            WebSocketProvider.onConversationCreated((data) => {
+                console.log('[ChatStore] Nueva conversación creada:', data);
+                this.handleConversationCreated(data.conversation);
+            });
+
+            // Escuchar conversación actualizada
+            WebSocketProvider.onConversationUpdated((data) => {
+                console.log('[ChatStore] Conversación actualizada:', data);
+                this.handleConversationUpdated(data.conversation);
+            });
+
+            // Escuchar conversación eliminada
+            WebSocketProvider.onConversationDeleted((data) => {
+                console.log('[ChatStore] Conversación eliminada:', data);
+                this.handleConversationDeleted(data.conversationId);
+            });
+
+            // Escuchar participante añadido
+            WebSocketProvider.onParticipantAdded((data) => {
+                console.log('[ChatStore] Participante añadido:', data);
+                this.handleParticipantAdded(data);
+            });
+
+            // Escuchar participante removido
+            WebSocketProvider.onParticipantRemoved((data) => {
+                console.log('[ChatStore] Participante removido:', data);
+                this.handleParticipantRemoved(data);
+            });
+
+            this.realtimeEnabled = true;
+        },
+
+        /**
+         * Desactivar listeners de WebSocket
+         */
+        disableRealtimeListeners() {
+            // Los listeners se limpian automáticamente cuando se desconecta el WebSocket
+            this.realtimeEnabled = false;
+            console.log('[ChatStore] Listeners de tiempo real desactivados');
+        },
+
+        // ==================== HANDLERS DE EVENTOS EN TIEMPO REAL ====================
+
+        handleNewMessage(message: any) {
+            const messageModel = ConversationMessageModel.fromExternal(message);
+            
+            // Si estamos en la conversación, agregar el mensaje
+            if (this.currentConversationId === messageModel.conversationId) {
+                const exists = this.messages.find(m => m.uuid === messageModel.uuid);
+                if (!exists) {
+                    this.messages.push(messageModel);
+                    // Ordenar mensajes por fecha
+                    this.messages.sort((a, b) => {
+                        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                    });
+                }
+            }
+            
+            // Actualizar conversación
+            const conv = this.conversations.find(c => c.id === messageModel.conversationId);
+            if (conv) {
+                conv.lastMessage = messageModel;
+                conv.updatedAt = new Date();
+                
+                // Incrementar contador de no leídos si no es el usuario actual
+                // (esto lo decides basado en tu lógica)
+                conv.unreadCount = (conv.unreadCount || 0) + 1;
+                
+                // Mover conversación al inicio
+                const index = this.conversations.findIndex(c => c.id === messageModel.conversationId);
+                if (index !== -1 && index !== 0) {
+                    const conversation = this.conversations.splice(index, 1)[0];
+                    this.conversations.unshift(conversation);
+                }
+            }
+        },
+
+        handleMessageUpdated(message: any) {
+            const messageModel = ConversationMessageModel.fromExternal(message);
+            const index = this.messages.findIndex(m => m.uuid === messageModel.uuid);
+            
+            if (index !== -1) {
+                this.messages[index] = messageModel;
+            }
+        },
+
+        handleMessageDeleted(messageId: number) {
+            const index = this.messages.findIndex(m => m.id === messageId);
+            
+            if (index !== -1) {
+                this.messages.splice(index, 1);
+            }
+        },
+
+        handleConversationCreated(conversation: any) {
+            const conversationModel = ConversationModel.fromExternal(conversation);
+            const exists = this.conversations.find(c => c.uuid === conversationModel.uuid);
+            
+            if (!exists) {
+                this.conversations.unshift(conversationModel);
+            }
+        },
+
+        handleConversationUpdated(conversation: any) {
+            const conversationModel = ConversationModel.fromExternal(conversation);
+            const index = this.conversations.findIndex(c => c.uuid === conversationModel.uuid);
+            
+            if (index !== -1) {
+                this.conversations[index] = conversationModel;
+            }
+        },
+
+        handleConversationDeleted(conversationId: number) {
+            const index = this.conversations.findIndex(c => c.id === conversationId);
+            
+            if (index !== -1) {
+                this.conversations.splice(index, 1);
+            }
+            
+            // Si es la conversación actual, limpiar
+            if (this.currentConversationId === conversationId) {
+                this.clearCurrentConversation();
+            }
+        },
+
+        handleParticipantAdded(data: any) {
+            const participantModel = ConversationParticipantModel.fromExternal(data.participant);
+            
+            // Si estamos viendo los participantes de esta conversación, agregarlos
+            if (this.currentConversationId === data.conversationId) {
+                const exists = this.participants.find(p => p.uuid === participantModel.uuid);
+                if (!exists) {
+                    this.participants.push(participantModel);
+                }
+            }
+        },
+
+        handleParticipantRemoved(data: any) {
+            if (this.currentConversationId === data.conversationId) {
+                const index = this.participants.findIndex(p => p.uuid === data.participant.uuid);
+                if (index !== -1) {
+                    this.participants.splice(index, 1);
+                }
+            }
+        },
+
+        updateMessageStatusRealtime(messageId: number, accountId: number, status: 'sent' | 'delivered' | 'read') {
+            const message = this.messages.find(m => m.id === messageId);
+            if (message && message.statuses) {
+                const statusObj = message.statuses.find(s => s.accountId === accountId);
+                if (statusObj) {
+                    statusObj.status = status;
+                    statusObj.statusAt = new Date();
+                }
+            }
+        },
+
+        // ==================== CONVERSACIONES ====================
+        
         async loadConversations(accountId: number, options?: { limit?: number; offset?: number }) {
             this.loading = true;
             this.error = null;
@@ -207,7 +406,8 @@ export const useChatStore = defineStore('chat', {
             }
         },
 
-        // Mensajes
+        // ==================== MENSAJES ====================
+        
         async loadMessages(conversationId: number, options?: { limit?: number; offset?: number; before?: Date; after?: Date }) {
             this.loading = true;
             this.error = null;
@@ -220,6 +420,11 @@ export const useChatStore = defineStore('chat', {
                 this.messages = messages.sort((a, b) => {
                     return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
                 });
+                
+                // Unirse a la sala de la conversación para recibir eventos en tiempo real
+                if (WebSocketProvider.isConnected()) {
+                    WebSocketProvider.joinConversation(conversationId);
+                }
             } catch (error: any) {
                 this.error = error.message || 'Error al cargar mensajes';
                 console.error('Error loading messages:', error);
@@ -243,9 +448,13 @@ export const useChatStore = defineStore('chat', {
             try {
                 const message = await ChatProvider.sendMessage(data);
                 
-                // Agregar mensaje a la lista si estamos en la conversación correcta
+                // El mensaje se agregará automáticamente vía WebSocket,
+                // pero lo agregamos localmente por si acaso
                 if (this.currentConversationId === data.conversationId) {
-                    this.messages.push(message);
+                    const exists = this.messages.find(m => m.uuid === message.uuid);
+                    if (!exists) {
+                        this.messages.push(message);
+                    }
                 }
                 
                 // Actualizar última actualización de la conversación
@@ -330,7 +539,8 @@ export const useChatStore = defineStore('chat', {
             }
         },
 
-        // Participantes
+        // ==================== PARTICIPANTES ====================
+        
         async loadParticipants(conversationId: number, includeLeft?: boolean) {
             this.loading = true;
             this.error = null;
@@ -420,7 +630,8 @@ export const useChatStore = defineStore('chat', {
             }
         },
 
-        // Estados de mensajes
+        // ==================== ESTADOS DE MENSAJES ====================
+        
         async markAsRead(messageId: number, accountId: number) {
             this.error = null;
             
@@ -472,8 +683,14 @@ export const useChatStore = defineStore('chat', {
             }
         },
 
-        // Helpers
+        // ==================== HELPERS ====================
+        
         clearCurrentConversation() {
+            // Salir de la sala antes de limpiar
+            if (this.currentConversationId && WebSocketProvider.isConnected()) {
+                WebSocketProvider.leaveConversation(this.currentConversationId);
+            }
+            
             this.currentConversationId = null;
             this.messages = [];
             this.participants = [];
@@ -483,44 +700,10 @@ export const useChatStore = defineStore('chat', {
             this.error = null;
         },
 
-        // Para actualizaciones en tiempo real (WebSocket/Polling)
+        // Métodos legacy para compatibilidad (deprecated)
         addMessageRealtime(message: ConversationMessageModel) {
-            if (this.currentConversationId === message.conversationId) {
-                const exists = this.messages.find(m => m.uuid === message.uuid);
-                if (!exists) {
-                    this.messages.push(message);
-                }
-            }
-            
-            // Actualizar última mensaje de la conversación
-            const conv = this.conversations.find(c => c.id === message.conversationId);
-            if (conv) {
-                conv.lastMessage = message;
-                conv.updatedAt = new Date();
-                
-                // Si no es mensaje propio, incrementar contador
-                if (message.senderId !== this.currentConversationId) {
-                    conv.unreadCount = (conv.unreadCount || 0) + 1;
-                }
-                
-                // Mover conversación al inicio
-                const index = this.conversations.findIndex(c => c.id === message.conversationId);
-                if (index !== -1) {
-                    const conversation = this.conversations.splice(index, 1)[0];
-                    this.conversations.unshift(conversation);
-                }
-            }
-        },
-
-        updateMessageStatusRealtime(messageId: number, accountId: number, status: 'sent' | 'delivered' | 'read') {
-            const message = this.messages.find(m => m.id === messageId);
-            if (message && message.statuses) {
-                const statusObj = message.statuses.find(s => s.accountId === accountId);
-                if (statusObj) {
-                    statusObj.status = status;
-                    statusObj.statusAt = new Date();
-                }
-            }
+            console.warn('[ChatStore] addMessageRealtime está deprecated, usa initRealtimeListeners()');
+            this.handleNewMessage(message);
         },
     },
 });

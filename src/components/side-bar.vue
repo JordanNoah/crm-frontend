@@ -1,5 +1,5 @@
 <template>
-    <v-navigation-drawer  :rail="expandOnHover" :expand-on-hover="expandOnHover" permanent :width="260">
+    <v-navigation-drawer :rail="expandOnHover" :expand-on-hover="expandOnHover" permanent :width="260">
         <div class="d-flex align-center px-2 py-2">
             <v-avatar size="40">
                 <v-img :src="logoUrl" alt="Logo" />
@@ -7,25 +7,91 @@
             <h4 class="ml-4 mb-0">Aplicación</h4>
             <v-spacer></v-spacer>
             <div @click="changeRail()" class="cursor-pointer">
-                <VIcon v-if="expandOnHover">
-                    mdi-chevron-right
-                </VIcon>
-                <VIcon v-else>
-                    mdi-chevron-left
-                </VIcon>
+                <VIcon v-if="expandOnHover">mdi-chevron-right</VIcon>
+                <VIcon v-else>mdi-chevron-left</VIcon>
             </div>
         </div>
+        
         <v-list density="compact" nav>
-            <v-list-item prepend-icon="mdi-home-outline" title="Dashboard" value="dashboard"></v-list-item>
-            <v-list-item prepend-icon="mdi-account-outline" title="Usuarios" value="users" :to="{ name: 'Users' }"></v-list-item>
-            <v-list-item prepend-icon="mdi-forum-outline" title="Chat" value="chat" :to="{ name: 'Chat' }"></v-list-item>
-            <v-list-item prepend-icon="mdi-domain" title="Empresas" value="companies" :to="{ name: 'HeadquarterDashboard' }"></v-list-item>
-            <v-list-item prepend-icon="mdi-cart-outline" title="Productos" value="products" :to="{ name: 'ProductDashboard' }"></v-list-item>
-            <v-list-item prepend-icon="mdi-puzzle-outline" title="Plugins" value="plugins" :to="{ name: 'Plugins' }"></v-list-item>
+            <v-list-item 
+                prepend-icon="mdi-home-outline" 
+                title="Dashboard" 
+                value="dashboard"
+            ></v-list-item>
+
+            <!-- SEPARADOR: Sistema -->
+            <v-list-subheader v-if="!expandOnHover">SISTEMA</v-list-subheader>
+            
+            <v-list-item 
+                prepend-icon="mdi-account-tie" 
+                title="Usuarios del Sistema" 
+                value="users"
+                :to="{ name: 'UsersDashboard' }"
+            ></v-list-item>
+            
+            <v-list-item 
+                prepend-icon="mdi-shield-key" 
+                title="Roles y Permisos" 
+                value="roles"
+                :to="{ name: 'RolesPermissionsDashboard' }"
+            ></v-list-item>
+
+            <!-- SEPARADOR: CRM -->
+            <v-list-subheader v-if="!expandOnHover" class="mt-2">CRM</v-list-subheader>
+            
+            <v-list-item 
+                prepend-icon="mdi-account-group" 
+                title="Clientes" 
+                value="customers"
+                :to="{ name: 'CustomersDashboard' }"
+            ></v-list-item>
+            
+            <v-list-item 
+                prepend-icon="mdi-forum-outline" 
+                title="Chat" 
+                value="chat"
+                :to="{ name: 'Chat' }"
+            ></v-list-item>
+            
+            <v-list-item 
+                prepend-icon="mdi-domain" 
+                title="Empresas" 
+                value="companies"
+                :to="{ name: 'HeadquarterDashboard' }"
+            ></v-list-item>
+            
+            <v-list-item 
+                prepend-icon="mdi-cart-outline" 
+                title="Productos" 
+                value="products"
+                :to="{ name: 'ProductDashboard' }"
+            ></v-list-item>
+
+            <!-- SEPARADOR: Configuración -->
+            <v-list-subheader v-if="!expandOnHover" class="mt-2">CONFIGURACIÓN</v-list-subheader>
+            
+            <v-list-item 
+                prepend-icon="mdi-puzzle-outline" 
+                title="Plugins" 
+                value="plugins"
+                :to="{ name: 'Plugins' }"
+            ></v-list-item>
         </v-list>
+        
         <v-divider />
+        
         <v-list density="compact" nav>
-            <v-list-item v-for="plugin in activatedPlugins" :key="plugin.id" :prepend-icon="plugin.icon" :title="plugin.name" :value="plugin.id" :to="{ name: plugin.toName}"></v-list-item>
+            <v-list-subheader v-if="!expandOnHover && activatedPlugins.length">
+                PLUGINS ACTIVOS
+            </v-list-subheader>
+            <v-list-item 
+                v-for="plugin in activatedPlugins" 
+                :key="plugin.id" 
+                :prepend-icon="plugin.icon"
+                :title="plugin.name" 
+                :value="plugin.id" 
+                :to="{ name: plugin.toName }"
+            ></v-list-item>
         </v-list>
     </v-navigation-drawer>
 </template>
@@ -73,3 +139,14 @@ export default defineComponent({
     },
 })
 </script>
+
+<style scoped>
+.v-list-subheader {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9e9e9e;
+    letter-spacing: 0.5px;
+    padding-top: 8px;
+    padding-bottom: 4px;
+}
+</style>

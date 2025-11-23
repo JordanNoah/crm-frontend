@@ -21,6 +21,11 @@ import { ConversationModel } from "@/core/model/chat/conversation.model";
 import { ConversationParticipantModel } from "@/core/model/chat/conversationParticipant.model";
 import { ConversationMessageModel } from "@/core/model/chat/conversationMessage.model";
 import { MessageStatusModel } from "@/core/model/chat/messageStatus.model";
+import RoleModel from "@/core/model/role.model";
+import PermissionModel from "@/core/model/permission.model";
+import RoleRequest from "@/core/model/role-request.model";
+import CustomerModel from "@/core/model/customer.model";
+
 
 export default class AuthProvider {
     private static readonly authAxios: AxiosInstance = Provider.getInstance("auth", {
@@ -374,7 +379,7 @@ export default class AuthProvider {
 
         const response = await this.authAxios.get(`/chats/conversations/account/${accountId}`, { params });
         console.log(response);
-        
+
         return response.data.map((item: any) => ConversationModel.fromExternal(item));
     }
 
@@ -527,12 +532,12 @@ export default class AuthProvider {
         formData.append('conversationId', String(data.conversationId));
         formData.append('senderId', String(data.senderId));
         formData.append('content', data.content);
-        
+
         // Inferir el tipo del archivo si existe
         if (data.file) {
             const mimeType = data.file.type;
             let type: 'text' | 'image' | 'file' | 'audio' | 'video' = 'file';
-            
+
             if (mimeType.startsWith('image/')) {
                 type = 'image';
             } else if (mimeType.startsWith('audio/')) {
@@ -540,13 +545,13 @@ export default class AuthProvider {
             } else if (mimeType.startsWith('video/')) {
                 type = 'video';
             }
-            
+
             formData.append('type', type);
             formData.append('file', data.file);
         } else {
             formData.append('type', 'text');
         }
-        
+
         if (data.metadata) formData.append('metadata', data.metadata);
         if (data.replyToId) formData.append('replyToId', String(data.replyToId));
 
@@ -714,5 +719,268 @@ export default class AuthProvider {
             params: { q: searchTerm }
         });
         return response.data.map((item: any) => AccountModel.fromExternal(item));
+    }
+
+    static async getRolesAndPermissions(companyId: number): Promise<PaginationItemEntity<RoleModel>> {
+        const response = await this.authAxios.get('/roles', {
+            params: {
+                type: 'all',
+                companyId,
+            },
+        });
+        return new PaginationItemEntity(
+            response.data.items.map((item: any) => RoleModel.fromExternal(item)),
+            response.data.total
+        );
+    }
+
+    static async getRoleByUuid(uuid: string): Promise<RoleModel | null> {
+        const response = await this.authAxios.get(`/roles/${uuid}/with-permissions`);
+        return response.data != null ? RoleModel.fromExternal(response.data) : null;
+    }
+
+    static async permissionsList(): Promise<PaginationItemEntity<PermissionModel>> {
+        const response = await this.authAxios.get('/permissions');
+        return new PaginationItemEntity(
+            response.data.data.map((item: any) => PermissionModel.fromExternal(item)),
+            response.data.total
+        );
+    }
+
+    static async saveRole(roleData: RoleRequest): Promise<RoleModel> {
+        if (roleData.uuid) {
+            // Actualizar rol existente
+            const response = await this.authAxios.put(`/roles/${roleData.uuid}`, roleData);
+            return RoleModel.fromExternal(response.data);
+        } else {
+            // Crear nuevo rol
+            const response = await this.authAxios.post('/roles', roleData);
+            return RoleModel.fromExternal(response.data);
+        }
+    }
+
+    static async saveUser(userData: Partial<AccountModel>): Promise<AccountModel> {
+        console.log(userData);
+
+        const fd = new FormData();
+
+        // Preparar datos básicos
+        const accountData: any = { ...userData };
+
+        // Convertir country a ID si existe
+        if (accountData.country) {
+            accountData.country = typeof accountData.country === 'object' ? accountData.country.id : accountData.country;
+        }
+
+        // Convertir languages a string separado por comas
+        if (accountData.languages && Array.isArray(accountData.languages)) {
+            accountData.languages = accountData.languages
+                .map((lang: any) => typeof lang === 'object' ? lang.id : lang)
+                .join(',');
+        }
+
+        if (accountData.roles && Array.isArray(accountData.roles)) {
+            accountData.roles = accountData.roles.map((role: any) => typeof role === 'object' ? role.id : role).join(',');
+        }
+
+        // Agregar file si existe
+        const file = accountData.file;
+        delete accountData.file;
+
+        // Agregar todos los campos al FormData
+        for (const key in accountData) {
+            if (accountData[key] !== undefined && accountData[key] !== null && accountData[key] !== '') {
+                fd.append(key, String(accountData[key]));
+            }
+        }
+
+        // Agregar archivo si existe
+        if (file instanceof File) {
+            fd.append('file', file);
+        }
+
+        const response = await this.authAxios.post('/accounts', fd, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+        return AccountModel.fromExternal(response.data.account || response.data);
+    }
+
+    static async getUserByUuid(uuid: string): Promise<AccountModel | null> {
+        try {
+            const response = await this.authAxios.get(`/accounts/${uuid}`);
+            return response.data.account ? AccountModel.fromExternal(response.data.account) : null;
+        } catch (error) {
+            console.error('Error fetching user:', error);
+            return null;
+        }
+    }
+
+    static async getUsers(companyId: number): Promise<PaginationItemEntity<AccountModel>> {
+        const response = await this.authAxios.get('/accounts/company/' + companyId + '/search', {
+            params: {
+                q: '', // Búsqueda vacía para obtener todos
+            },
+        });
+        // Si es un array simple, convertirlo a formato paginado
+        if (Array.isArray(response.data)) {
+            return new PaginationItemEntity(
+                response.data.map((item: any) => AccountModel.fromExternal(item)),
+                response.data.length
+            );
+        }
+        // Si ya viene paginado
+        return new PaginationItemEntity(
+            response.data.items?.map((item: any) => AccountModel.fromExternal(item)) || [],
+            response.data.total || 0
+        );
+    }
+
+    static async getUsersPaginated(params: {
+        companyId: number;
+        page?: number;
+        itemsPerPage?: number;
+        sortBy?: string;
+        sortOrder?: 'asc' | 'desc';
+        search?: string;
+        filters?: any;
+    }): Promise<PaginationItemEntity<AccountModel>> {
+        const response = await this.authAxios.get(`/accounts/company/${params.companyId}/paginated`, {
+            params: {
+                page: params.page || 1,
+                limit: params.itemsPerPage || 10,
+                sortBy: params.sortBy,
+                sortOrder: params.sortOrder || 'asc',
+                search: params.search || '',
+                ...params.filters
+            },
+        });
+        
+        return new PaginationItemEntity(
+            response.data.items?.map((item: any) => AccountModel.fromExternal(item)) || [],
+            response.data.total || 0
+        );
+    }
+
+    // ==================== CUSTOMERS ====================
+
+    static async createCustomer(customer: CustomerModel): Promise<CustomerModel> {
+        const fd = new FormData();
+        fd.append('name', customer.name);
+        fd.append('email', customer.email);
+        fd.append('phone', customer.phone);
+        fd.append('address', customer.address);
+        fd.append('identificationNumber', customer.identificationNumber);
+        fd.append('country', customer.country);
+        fd.append('companyId', String(customer.companyId));
+
+        if (customer.file) {
+            fd.append('file', customer.file);
+        }
+
+        const response = await this.authAxios.post('/customers', fd, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+        return CustomerModel.fromExternal(response.data);
+    }
+
+    static async updateCustomer(customer: CustomerModel): Promise<CustomerModel> {
+        const fd = new FormData();
+        
+        if (customer.name) fd.append('name', customer.name);
+        if (customer.email) fd.append('email', customer.email);
+        if (customer.phone) fd.append('phone', customer.phone);
+        if (customer.address) fd.append('address', customer.address);
+        if (customer.identificationNumber) fd.append('identificationNumber', customer.identificationNumber);
+        if (customer.country) fd.append('country', customer.country);
+
+        if (customer.file) {
+            fd.append('file', customer.file);
+        }
+
+        const response = await this.authAxios.put(`/customers/${customer.uuid}`, fd, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            }
+        });
+        return CustomerModel.fromExternal(response.data);
+    }
+
+    static async getCustomerByUuid(uuid: string): Promise<CustomerModel | null> {
+        try {
+            const response = await this.authAxios.get(`/customers/uuid/${uuid}`);
+            return CustomerModel.fromExternal(response.data);
+        } catch (error) {
+            console.error('Error fetching customer:', error);
+            return null;
+        }
+    }
+
+    static async getCustomerById(id: number): Promise<CustomerModel | null> {
+        try {
+            const response = await this.authAxios.get(`/customers/id/${id}`);
+            return CustomerModel.fromExternal(response.data);
+        } catch (error) {
+            console.error('Error fetching customer:', error);
+            return null;
+        }
+    }
+
+    static async getCustomersByCompany(
+        companyId: number,
+        page = 1,
+        limit = 10
+    ): Promise<{ data: CustomerModel[], pagination: { page: number, limit: number, total: number, pages: number } }> {
+        const response = await this.authAxios.get(`/customers/company/${companyId}`, {
+            params: { page, limit }
+        });
+        return {
+            data: response.data.data.map((item: any) => CustomerModel.fromExternal(item)),
+            pagination: response.data.pagination
+        };
+    }
+
+    static async deleteCustomer(uuid: string): Promise<void> {
+        await this.authAxios.delete(`/customers/${uuid}`);
+    }
+
+    static async searchCustomers(
+        companyId: number,
+        searchTerm = '',
+        searchType: 'global' | 'name' | 'email' | 'phone' | 'identification' = 'global',
+        page = 1,
+        limit = 10
+    ): Promise<{ data: CustomerModel[], searchTerm: string, searchType: string }> {
+        const response = await this.authAxios.get(`/customers/company/${companyId}/search`, {
+            params: {
+                q: searchTerm,
+                type: searchType,
+                page,
+                limit
+            }
+        });
+        return {
+            data: response.data.data.map((item: any) => CustomerModel.fromExternal(item)),
+            searchTerm: response.data.searchTerm,
+            searchType: response.data.searchType
+        };
+    }
+
+    static async getCustomerStats(companyId: number): Promise<{
+        total: number,
+        countByCountry: any[],
+        recentCount: number,
+        recentCustomers: CustomerModel[]
+    }> {
+        const response = await this.authAxios.get(`/customers/company/${companyId}/stats`);
+        return {
+            total: response.data.total,
+            countByCountry: response.data.countByCountry,
+            recentCount: response.data.recentCount,
+            recentCustomers: response.data.recentCustomers.map((item: any) => CustomerModel.fromExternal(item))
+        };
     }
 }

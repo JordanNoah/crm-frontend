@@ -71,7 +71,7 @@ export default defineComponent({
     data() {
         return {
             sessionStore: useSessionStore(),
-            currentLang: 'es', // puedes cambiarlo por el idioma de sesión si lo tienes
+            currentLang: 'es',
             languages: [] as LanguageModel[],
             countries: [] as CountryModel[],
             timezones: [] as Array<{ code: string; name: string }>,

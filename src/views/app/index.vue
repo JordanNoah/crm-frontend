@@ -15,9 +15,11 @@
 import AppNavBar from '@/components/app-nav-bar.vue';
 import SideBar from '@/components/side-bar.vue';
 import Searcher from '@/components/searcher.vue';
-import { defineComponent } from 'vue';
+import { defineComponent, computed, onMounted, watch } from 'vue';
+import { useTheme } from 'vuetify';
 import AuthProvider from '@/core/providers/auth/auth';
 import { useSessionStore } from '@/stores/session';
+import { useAppStore } from '@/stores/app';
 
 export default defineComponent({
   name: 'AppView',
@@ -35,10 +37,30 @@ export default defineComponent({
       useSessionStore().setAccount(response.account);
     }
   },
-  computed: {
-    company() {
-      return useSessionStore().getCompany;
-    },
+  
+  setup() {
+    const sessionStore = useSessionStore();
+    const appStore = useAppStore();
+    const theme = useTheme();
+    
+    onMounted(() => {
+      // Inicializar tema desde localStorage
+      appStore.initTheme();
+      
+      // Aplicar tema a Vuetify
+      theme.global.name.value = appStore.getTheme;
+    });
+    
+    // Watch para cambios de tema
+    watch(() => appStore.isDarkTheme, (newValue) => {
+      theme.global.name.value = newValue ? 'dark' : 'light';
+    });
+    
+    const company = computed(() => sessionStore.getCompany);
+    
+    return {
+      company
+    };
   },
 });
 </script>

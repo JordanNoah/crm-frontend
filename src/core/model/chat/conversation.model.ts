@@ -7,13 +7,14 @@ export class ConversationModel {
         public id: number,
         public uuid: string,
         public name: string | null,
-        public type: 'private' | 'group',
+        public type: 'private' | 'group' | 'mobile',
         public createdBy: number,
         public createdAt: Date,
         public updatedAt: Date,
         public deletedAt: Date | null,
         public creator?: AccountModel,
         public participants?: ConversationParticipantModel[],
+        public messages?: ConversationMessageModel[],
         public lastMessage?: ConversationMessageModel,
         public unreadCount?: number
     ) {}
@@ -30,6 +31,7 @@ export class ConversationModel {
             deletedAt,
             creator,
             participants,
+            messages,
             lastMessage,
             unreadCount
         } = object;
@@ -50,6 +52,7 @@ export class ConversationModel {
             deletedAt ? new Date(deletedAt) : null,
             creator ? AccountModel.fromExternal(creator) : undefined,
             participants ? participants.map((p: any) => ConversationParticipantModel.fromExternal(p)) : undefined,
+            messages ? messages.map((m: any) => ConversationMessageModel.fromExternal(m)) : undefined,
             lastMessage ? ConversationMessageModel.fromExternal(lastMessage) : undefined,
             unreadCount
         );
@@ -62,6 +65,10 @@ export class ConversationModel {
 
     get isPrivate(): boolean {
         return this.type === 'private';
+    }
+
+    get isMobile(): boolean {
+        return this.type === 'mobile';
     }
 
     get participantCount(): number {

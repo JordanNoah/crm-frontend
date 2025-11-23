@@ -32,6 +32,41 @@ const routes: Array<RouteRecordRaw> = [
     },
     children: [
       {
+        path: 'customers',
+        name: 'Customers',
+        component: () => import('@/views/app/customer/index.vue'),
+        redirect: { name: 'CustomersDashboard' },
+        children: [
+          {
+            path: 'dashboard',
+            name: 'CustomersDashboard',
+            component: () => import('@/views/app/customer/dashboard.vue'),
+          },
+          {
+            path: 'form/:uuid?',
+            name: 'CreateCustomer',
+            component: () => import('@/views/app/customer/form.vue'),
+          }
+        ]
+      },
+      {
+        path: 'roles-permissions',
+        name: 'RolesPermissions',
+        component: () => import('@/views/app/rolesPermission/index.vue'),
+        children: [
+          {
+            path: 'dashboard',
+            name: 'RolesPermissionsDashboard',
+            component: () => import('@/views/app/rolesPermission/dashboard.vue'),
+          },
+          {
+            path: 'form/:uuid?',
+            name: 'RolesPermissionsForm',
+            component: () => import('@/views/app/rolesPermission/form.vue'),
+          }
+        ]
+      },
+      {
         path: 'plugins',
         name: 'Plugins',
         component: () => import('@/views/app/plugin.vue')
@@ -67,7 +102,20 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'users',
         name: 'Users',
-        component: () => import('@/views/app/user.vue')
+        component: () => import('@/views/app/user/index.vue'),
+        children: [
+          {
+            path: 'dashboard',
+            name: 'UsersDashboard',
+            component: () => import('@/views/app/user/dashboard.vue'),
+          },
+          {
+            path: 'form/:uuid',
+            name: 'UsersForm',
+            component: () => import('@/views/app/user/form.vue'),
+            props: true,
+          }
+        ]
       },
       {
         path: 'products',
